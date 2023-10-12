@@ -1,6 +1,6 @@
 {
-  "data": "./src/data",
   "linkStyle": "wikilink",
+  "absolutePath": "03 Library/Dungeons & Dragons",
 
   "sources": [
     "DMG",
@@ -8,49 +8,49 @@
     "MM"
   ],
 
-  "exlcude": [
+  "exclude": [
     "psionics",
     "rewards"
   ],
 
-  "output": {
-    "monsters": "./src/output/monsters/",
-    "classes": "./src/output/classes/",
-    "subclasses": "./src/output/subclasses/",
-    "races": "./src/output/races/",
-    "subraces": "./src/output/subraces/",
-    "variants": "./src/output/variants/",
-    "equipment": "./src/output/equipment/",
-    "magic-items": "./src/output/magic-items/",
-    "spells": "./src/output/spells/",
-    "backgrounds": "./src/output/backgrounds/",
-    "transports": "./src/output/transports/",
-    "rewards": "./src/output/rewards/",
-    "feats": "./src/output/feats/",
-    "objects": "./src/output/objects/",
-    "traps": "./src/output/traps/",
-    "psionics": "./src/output/psionics/",
-    "optional-features": "./src/output/optional-features/"
+  "outputs": {
+    "monsters": "src/outputs/monsters/",
+    "classes": "src/outputs/classes/",
+    "subclasses": "src/outputs/subclasses/",
+    "races": "src/outputs/races/",
+    "subraces": "src/outputs/subraces/",
+    "variants": "src/outputs/variants/",
+    "equipment": "src/outputs/equipment/",
+    "magic-items": "src/outputs/magic-items/",
+    "spells": "src/outputs/spells/",
+    "backgrounds": "src/outputs/backgrounds/",
+    "transports": "src/outputs/transports/",
+    "rewards": "src/outputs/rewards/",
+    "feats": "src/outputs/feats/",
+    "objects": "src/outputs/objects/",
+    "traps": "src/outputs/traps/",
+    "psionics": "src/outputs/psionics/",
+    "optional-features": "src/outputs/optional-features/"
   },
   
   "templates": {
-    "monsters": "./src/templates/monsters.hbs",
-    "classes": "./src/templates/monsters.hbs",
-    "subclasses": "./src/templates/monsters.hbs",
-    "races": "./src/templates/monsters.hbs",
-    "subraces": "./src/templates/monsters.hbs",
-    "variants": "./src/templates/monsters.hbs",
-    "equipment": "./src/templates/monsters.hbs",
-    "magicItems": "./src/templates/monsters.hbs",
-    "spells": "./src/templates/monsters.hbs",
-    "backgrounds": "./src/templates/monsters.hbs",
-    "transports": "./src/templates/monsters.hbs",
-    "rewards": "./src/templates/monsters.hbs",
-    "feats": "./src/templates/monsters.hbs",
-    "objects": "./src/templates/monsters.hbs",
-    "traps": "./src/templates/monsters.hbs",
-    "psionics": "./src/templates/monsters.hbs",
-    "optional-features": "./src/templates/optional-features.hbs/"
+    "monsters": "src/templates/monster.hbs",
+    "classes": "src/templates/class.hbs",
+    "subclasses": "src/templates/subclass.hbs",
+    "races": "src/templates/race.hbs",
+    "subraces": "src/templates/subrace.hbs",
+    "variants": "src/templates/variant.hbs",
+    "equipment": "src/templates/equipment.hbs",
+    "magic-items": "src/templates/magic-item.hbs",
+    "spells": "src/templates/spell.hbs",
+    "backgrounds": "src/templates/background.hbs",
+    "transports": "src/templates/transport.hbs",
+    "rewards": "src/templates/reward.hbs",
+    "feats": "src/templates/feat.hbs",
+    "objects": "src/templates/object.hbs",
+    "traps": "src/templates/trap.hbs",
+    "psionics": "src/templates/psionic.hbs",
+    "optional-features": "src/templates/optional-feature.hbs"
   }
 }
 
