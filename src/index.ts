@@ -1,57 +1,42 @@
 import fs from 'fs';
-import Handlebars from 'handlebars';
+import path from 'path';
+import { Command } from 'commander';
 import { Config } from './types';
 
-const ENTITIES = [
-  'monsters',
-  'classes',
-  'subclasses',
-  'races',
-  'subraces',
-  'variants',
-  'equipment',
-  'magic-items',
-  'spells',
-  'backgrounds',
-  'transports',
-  'rewards',
-  'feats',
-  'traps',
-  'psionics',
-  'optional-features'
-] as const;
-
-function getData(entity: keyof typeof ENTITIES): Object[] {
-  return [{}];
+function errorColor(str: string) {
+  return `\x1b[31m${str}\x1b[0m`;
 }
 
-async function main() {
-  const rawdata = fs.readFileSync(`${process.cwd()}/config.json`);
-  const config = JSON.parse(rawdata.toString()) as Config;
-  const entities = ENTITIES.filter(entity => !(config.exclude || []).includes(entity));
+(async function main() {
+  const DEFAULT_CONFIG = path.join(process.cwd(), 'example/config.json');
+  const DEFAULT_OUTPUT = path.join(process.cwd(), 'output');
+  const program = new Command();
 
-  entities.forEach(entity => {
-    const templatePath = `${process.cwd()}/${config.templates[entity]}`;
-    const templateRaw = fs.readFileSync(templatePath);
-    const template = Handlebars.compile(templateRaw.toString(), { noEscape: true });
-    const output = `${process.cwd()}/${config.outputs[entity]}`;
-    let data: Object[] = [];
+  program
+    .name('5e-tools-converter')
+    .description('A CLI that converts content from 5eTools to Markdown')
+    .version('0.0.1');
 
-    if (entity === 'backgrounds') {
-      const backgroundsPath = `${process.cwd()}/src/data/backgrounds.json`;
-      const backgroundsRawData = fs.readFileSync(backgroundsPath);
-      const backgroundsData = JSON.parse(backgroundsRawData.toString());
-      data = backgroundsData.background;
-    }
+  program
+    .option('-c, --config', 'Config file path', DEFAULT_CONFIG)
+    .option('-o, --output', 'Output directory', DEFAULT_OUTPUT)
+    .option('-d, --data', '5eTools data path');
 
-    console.log('data', data);
-
-    // data.forEach(data => {
-    //   const helpers = {};
-    //   const content = template(data, { helpers });
-    //   fs.writeFileSync()
-    // });h
+  program.configureOutput({
+    writeOut: str => process.stdout.write(`[OUT] ${str}`),
+    writeErr: str => process.stdout.write(`[ERR] ${str}`),
+    outputError: (str, write) => write(errorColor(str))
   });
-}
 
-main();
+  program.parse();
+  const options = program.opts();
+
+  if (!options.data) {
+    program.error('You need to pass the -d, --data argument.');
+    return;
+  }
+
+  const rawConfig = fs.readFileSync(options.config);
+  const config = JSON.parse(rawConfig.toString()) as Config;
+  console.log('config', config);
+})();

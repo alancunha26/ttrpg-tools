@@ -1,0 +1,36 @@
+{
+  "linkStyle": "wikilink",
+  "absolutePath": "03 Library/Dungeons & Dragons",
+
+  "sources": [
+    "DMG",
+    "PHB",
+    "MM"
+  ],
+
+  "exclude": [
+    "psionics",
+    "rewards"
+  ],
+  
+  "templates": {
+    "monsters": "src/templates/monster.hbs",
+    "classes": "src/templates/class.hbs",
+    "subclasses": "src/templates/subclass.hbs",
+    "races": "src/templates/race.hbs",
+    "subraces": "src/templates/subrace.hbs",
+    "variants": "src/templates/variant.hbs",
+    "items": "src/templates/item.hbs",
+    "spells": "src/templates/spell.hbs",
+    "backgrounds": "src/templates/background.hbs",
+    "transports": "src/templates/transport.hbs",
+    "rewards": "src/templates/reward.hbs",
+    "feats": "src/templates/feat.hbs",
+    "objects": "src/templates/object.hbs",
+    "traps": "src/templates/trap.hbs",
+    "psionics": "src/templates/psionic.hbs",
+    "optional-features": "src/templates/optional-feature.hbs"
+  }
+}
+
+

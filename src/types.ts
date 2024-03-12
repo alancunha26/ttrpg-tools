@@ -6,7 +6,7 @@ export interface Entities {
   subraces?: string;
   variants?: string;
   equipment?: string;
-  'magic-items'?: string;
+  items?: string;
   spells?: string;
   backgrounds?: string;
   transports?: string;
@@ -19,10 +19,9 @@ export interface Entities {
 }
 
 export interface Config {
-  absolutePath?: string;
-  linkStyle: string;
+  absolutePath: string;
+  linkStyle: 'wikilink' | 'markdown';
   sources: string[];
   exclude?: string[];
-  outputs: Entities;
   templates: Entities;
 }
