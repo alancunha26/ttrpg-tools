@@ -1,11 +1,15 @@
 {
   "linkStyle": "wikilink",
-  "absolutePath": "03 Library/Dungeons & Dragons",
 
   "sources": [
     "DMG",
     "PHB",
-    "MM"
+    "MM",
+    "TCE",
+    "XGE",
+    "MTF",
+
+    "AAG"
   ],
 
   "exclude": [
@@ -14,22 +18,42 @@
   ],
   
   "templates": {
-    "monsters": "src/templates/monster.hbs",
-    "classes": "src/templates/class.hbs",
-    "subclasses": "src/templates/subclass.hbs",
-    "races": "src/templates/race.hbs",
-    "subraces": "src/templates/subrace.hbs",
-    "variants": "src/templates/variant.hbs",
-    "items": "src/templates/item.hbs",
-    "spells": "src/templates/spell.hbs",
-    "backgrounds": "src/templates/background.hbs",
-    "transports": "src/templates/transport.hbs",
-    "rewards": "src/templates/reward.hbs",
-    "feats": "src/templates/feat.hbs",
-    "objects": "src/templates/object.hbs",
-    "traps": "src/templates/trap.hbs",
-    "psionics": "src/templates/psionic.hbs",
-    "optional-features": "src/templates/optional-feature.hbs"
+    "monsters": "example/templates/monster.hbs",
+    "classes": "example/templates/class.hbs",
+    "subclasses": "example/templates/subclass.hbs",
+    "races": "example/templates/race.hbs",
+    "subraces": "example/templates/subrace.hbs",
+    "variants": "example/templates/variant.hbs",
+    "items": "example/templates/item.hbs",
+    "spells": "example/templates/spell.hbs",
+    "backgrounds": "example/templates/background.hbs",
+    "transports": "example/templates/transport.hbs",
+    "rewards": "example/templates/reward.hbs",
+    "feats": "example/templates/feat.hbs",
+    "objects": "example/templates/object.hbs",
+    "traps": "example/templates/trap.hbs",
+    "psionics": "example/templates/psionic.hbs",
+    "optional-features": "example/templates/optional-feature.hbs"
+  },
+  
+  "paths": {
+    "sources": "03 Library",
+    "monsters": "03 Library/Dungeons & Dragons 5e",
+    "classes": "03 Library/Dungeons & Dragons 5e",
+    "subclasses": "03 Library/Dungeons & Dragons 5e",
+    "races": "03 Library/Dungeons & Dragons 5e",
+    "subraces": "03 Library/Dungeons & Dragons 5e",
+    "variants": "03 Library/Dungeons & Dragons 5e",
+    "items": "03 Library/Dungeons & Dragons 5e",
+    "spells": "03 Library/Dungeons & Dragons 5e",
+    "backgrounds": "03 Library/Dungeons & Dragons 5e",
+    "transports": "03 Library/Dungeons & Dragons 5e",
+    "rewards": "03 Library/Dungeons & Dragons 5e",
+    "feats": "03 Library/Dungeons & Dragons 5e",
+    "objects": "03 Library/Dungeons & Dragons 5e",
+    "traps": "03 Library/Dungeons & Dragons 5e",
+    "psionics": "03 Library/Dungeons & Dragons 5e",
+    "optional-features": "03 Library/Dungeons & Dragons 5e"
   }
 }
 
