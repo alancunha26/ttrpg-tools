@@ -23,6 +23,7 @@ export interface EntityPaths {
   objects: string;
   traps: string;
   psionics: string;
+  renderdemo: string;
   'optional-features': string;
 }
 
@@ -31,9 +32,11 @@ export type EntityType = keyof EntityPaths;
 export interface Config {
   sourcesPath: string;
   linkStyle: 'wikilink' | 'markdown';
-  sources: SourceCode[];
   templates: Omit<EntityPaths, 'sources'>;
   paths: EntityPaths;
+  imageWidth: number;
+  sources: SourceCode[];
+  identation: number;
 }
 
 export interface Options {
@@ -190,29 +193,197 @@ export interface AdditionalSource {
  * ENTRIES
  */
 
-export type Entry = string | EntriesEntry | ListEntry | TableEntry | QuoteEntry | ImageEntry;
+// allTypes [
+//   'string',           'quote',
+//   'list',             'entries',
+//   'inline',           'inlineBlock',
+//   'options',          'table',
+//   'bonus',            'bonusSpeed',
+//   'dice',             'abilityDc',
+//   'abilityAttackMod', 'abilityGeneric',
+//   'link',             'optfeature',
+//   'inset',            'insetReadaloud',
+//   'variant',          'image',
+//   'item',             'itemSub',
+//   'variantSub',       'statblockInline',
+//   'statblock'
+// ]
 
-export interface ListEntry {
+export type Entry =
+  | string
+  | EntriesEntry
+  | TableEntry
+  | QuoteEntry
+  | ImageEntry
+  | InsetEntry
+  | ListEntry
+  | ItemEntry
+  | InlineEntry
+  | InlineBlockEntry
+  | LinkEntry
+  | OptionsEntry
+  | BonusEntry
+  | SectionEntry;
+
+/**
+ * OPTIONS ENTRY
+ */
+
+export interface OptionsEntry {
+  type: 'options';
+  entries: Entry[];
+}
+
+/**
+ * BONUS ENTRY
+ */
+export interface BonusEntry {
+  type: 'bonus' | 'bonusSpeed';
+  value?: number;
+}
+
+/**
+ * INLINE ENTRY
+ */
+
+export interface InlineEntry {
+  type: 'inline';
+  entries: Entry[];
+}
+
+export interface InlineBlockEntry {
+  type: 'inlineBlock';
+  entries: Entry[];
+}
+
+/**
+ * LINK ENTRY
+ */
+
+export interface InternalLink {
+  type: 'link';
+  text: string;
+  href: { type: 'internal'; path: string };
+}
+
+export interface ExternalLink {
+  type: 'link';
+  text: string;
+  href: { type: 'external'; url: string };
+}
+
+export type LinkEntry = InternalLink | ExternalLink;
+
+/**
+ * LIST ENTRIES
+ */
+
+export interface BulletListEntry {
   type: 'list';
-  style: 'list-hang-no-title' | 'list-no-bullets';
-  items?: Entry[];
+  items: Entry[];
+  name?: string;
 }
 
-export interface TableEntry {
-  type: 'table';
-  colLabels: string[];
-  colStyles: string[];
-  rows: string[];
+export interface NoBulletListEntry {
+  type: 'list';
+  style: 'list-no-bullets';
+  items: Entry[];
+  name?: string;
 }
 
-export interface SectionEntry {
-  type: 'section';
-  name: string;
+export interface HangListEntry {
+  type: 'list';
+  style: 'list-hang';
+  items: Entry[];
+  name?: string;
+}
+
+export interface HangNoTitleListEntry {
+  type: 'list';
+  style: 'list-hang-notitle';
+  items: Entry[];
+  name?: string;
+}
+
+export interface DecimalListEntry {
+  type: 'list';
+  style: 'list-decimal';
+  items: Entry[];
+  start?: number;
+  name?: string;
+}
+
+export interface RomanListEntry {
+  type: 'list';
+  style: 'list-upper-roman' | 'list-lower-roman';
+  items: Entry[];
+  start?: number;
+  name?: string;
+}
+
+export type ListEntry =
+  | BulletListEntry
+  | NoBulletListEntry
+  | HangListEntry
+  | HangNoTitleListEntry
+  | DecimalListEntry
+  | RomanListEntry;
+
+/**
+ * ITEM ENTRIES
+ */
+
+export interface BaseItemEntry {
+  type: 'item';
+  name?: string;
+  entry?: Entry;
   entries?: Entry[];
 }
 
+export interface SubItemEntry {
+  type: 'itemSub';
+  name?: string;
+  entry: Entry;
+}
+
+export interface SpellItemEntry {
+  type: 'itemSpell';
+  name?: string;
+  entry: Entry;
+}
+
+export type ItemEntry = BaseItemEntry | SubItemEntry | SpellItemEntry;
+
+/**
+ * TABLE ENTRY
+ */
+
+export interface TableEntry {
+  type: 'table';
+  caption?: string;
+  colLabels: string[];
+  colStyles: string[];
+  rows: string[];
+  name?: string;
+}
+
+/**
+ * SECTION ENTRY
+ */
+
+export interface SectionEntry {
+  type: 'section';
+  name?: string;
+  entries: Entry[];
+}
+
+/**
+ * IMAGE ENTRY
+ */
+
 export interface ImageEntry {
   type: 'image';
+  name?: string;
   title?: string;
   credit?: string;
   href: {
@@ -221,34 +392,60 @@ export interface ImageEntry {
   };
 }
 
+/**
+ * ENTRIES ENTRY
+ */
+
 export interface EntriesEntry {
   type: 'entries';
+  entries: Entry[];
   name?: string;
-  entries: Array<Entry>;
 }
+
+/**
+ * INSET ENTRY
+ */
+
+export interface InsetEntry {
+  type: 'inset';
+  entries: Entry[];
+  name?: string;
+}
+
+/**
+ * QUOTE ENTRY
+ */
 
 export interface QuoteEntry {
   type: 'quote';
   entries: string[];
   by: string;
+  from?: string;
+  name?: string;
 }
+
+/**
+ * ARR ENTRIES
+ */
 
 export interface PrependArrEntry {
   mode: 'prependArr';
-  items: Entry;
+  items: Entry | Entry[];
 }
 
 export interface InsertArrEntry {
   mode: 'insertArr';
   index: number;
-  items: Entry;
+  items: Entry | Entry[];
 }
 
 export interface ReplaceArrEntry {
   mode: 'replaceArr';
   replace: string | { index: number };
-  items: Entry;
+  items: Entry | Entry[];
 }
+
+export type ArrEntry = PrependArrEntry | InsertArrEntry | ReplaceArrEntry;
 
 /**
  * ENTITIES
@@ -257,7 +454,7 @@ export interface ReplaceArrEntry {
 export interface CopyEntity {
   name: string;
   source: string;
-  _mod?: { entries?: PrependArrEntry | InsertArrEntry | ReplaceArrEntry };
+  _mod?: { entries?: ArrEntry | ArrEntry[] };
 }
 
 export interface Entity {
@@ -269,7 +466,7 @@ export interface Entity {
   srd?: boolean;
   basicRules?: boolean;
   entries?: Entry[];
-  _copy?: CopyEntity[];
+  _copy?: CopyEntity;
   hasFluff?: boolean;
   hasFluffImages?: boolean;
 }

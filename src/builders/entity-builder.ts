@@ -8,7 +8,7 @@ import { sources } from '../sources';
 
 export const EntityBuilder = (context: Context) => {
   const { options, fluffs, type } = context;
-  const { config, helpers: _ } = options;
+  const { config, output, helpers: _ } = options;
 
   if (type === 'sources') {
     throw new Error('EntityType.sources is not implemented');
@@ -19,6 +19,7 @@ export const EntityBuilder = (context: Context) => {
     const fluff = _.findFluff(entity, fluffs);
     const entityName = entity.name.replace('Variant ', '');
     const filepath = _.getFilePath(entityName, type);
+    const dirpath = _.getDirPath(type);
 
     const templatePath = path.resolve(process.cwd(), config.templates[type]!);
     const templateFile = fs.readFileSync(templatePath);
@@ -39,7 +40,16 @@ export const EntityBuilder = (context: Context) => {
 
       async import(extraData: { [key: string]: any } = {}): Promise<void> {
         const content = template({ ...data, ...extraData }, { helpers: _.handlebars });
-        console.log(content);
+
+        if (!fs.existsSync(dirpath)) {
+          fs.mkdirSync(dirpath, { recursive: true });
+        }
+
+        if (fs.existsSync(filepath)) {
+          fs.rmSync(filepath);
+        }
+
+        fs.writeFileSync(filepath, content);
       }
     };
   };

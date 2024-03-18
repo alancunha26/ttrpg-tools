@@ -1,11 +1,11 @@
 import fs from 'fs';
-import path, { format } from 'path';
-import { Entry, Config, Entity, FluffEntity, EntityType } from './types';
+import path from 'path';
+import { Config, Entity, FluffEntity, EntityType, Entry } from './types';
 
 export const helpers = (config: Config, output: string) => {
   const { sources, linkStyle, paths } = config;
 
-  function findAllEntryTypes(entries?: Entry[], types: string[] = []) {
+  function findAllEntryTypes(entries?: any[], types: string[] = []) {
     let append: string[] = [];
 
     entries?.forEach(entry => {
@@ -14,14 +14,18 @@ export const helpers = (config: Config, output: string) => {
         return;
       }
 
-      if (entry.type === 'entries' && entry.entries) {
-        if (!types.includes('entries')) types.push('entries');
-        append = findAllEntryTypes(entry.entries);
+      if (!types.includes(entry.type)) {
+        types.push(entry.type);
+      }
+
+      if (entry.entries) {
+        append.push(...findAllEntryTypes(entry.entries));
         return;
       }
 
-      if (!types.includes(entry.type)) {
-        types.push(entry.type);
+      if (entry.items) {
+        append.push(...findAllEntryTypes(entry.items));
+        return;
       }
     });
 
@@ -35,9 +39,7 @@ export const helpers = (config: Config, output: string) => {
   }
 
   function findFluff(entity: Entity, fluffEntities: FluffEntity[]) {
-    return fluffEntities.find(
-      fluff => entity.name === fluff.name && entity.source === fluff.source
-    );
+    return fluffEntities.find(fluff => entity.name === fluff.name && entity.source === fluff.source);
   }
 
   function filterBySources(entities: Entity[]) {
@@ -57,9 +59,60 @@ export const helpers = (config: Config, output: string) => {
     return path.resolve(process.cwd(), output, paths[type], `${name}.md`);
   }
 
+  function getDirPath(type: EntityType): string {
+    return path.resolve(process.cwd(), output, paths[type]);
+  }
+
   function formatLink(name: string, type: EntityType): string {
     const vaultPath = getVaultPath(name, type);
     return linkStyle === 'wikilink' ? `[[${vaultPath}]]` : `[${name}](/${vaultPath}.md)`;
+  }
+
+  function numberToRoman(num: number, upper?: boolean): string {
+    let string = '';
+    const roman = {
+      M: 1000,
+      CM: 900,
+      D: 500,
+      CD: 400,
+      C: 100,
+      XC: 90,
+      L: 50,
+      XL: 40,
+      X: 10,
+      IX: 9,
+      V: 5,
+      IV: 4,
+      I: 1
+    } as const;
+
+    Object.keys(roman).forEach(key => {
+      const k = key as keyof typeof roman;
+      const q = Math.floor(num / roman[k]);
+      num -= q * roman[k];
+      string += key.repeat(q);
+    });
+
+    if (upper) {
+      return string;
+    }
+
+    return string.toLowerCase();
+  }
+
+  function sortEntries(entries: Entry[]): Entry[] {
+    return entries.sort((a, b) => {
+      let toSortA = '';
+      let toSortB = '';
+
+      if (typeof a === 'string') toSortA = `${a}`;
+      if (typeof a !== 'string' && 'name' in a && a.name) toSortA = `${a.name}`;
+
+      if (typeof b === 'string') toSortB = `${b}`;
+      if (typeof b !== 'string' && 'name' in b && b.name) toSortB = `${b.name}`;
+
+      return toSortA.toLowerCase() > toSortB.toLowerCase() ? 1 : -1;
+    });
   }
 
   return {
@@ -70,6 +123,9 @@ export const helpers = (config: Config, output: string) => {
     getVaultPath,
     getFilePath,
     formatLink,
+    getDirPath,
+    numberToRoman,
+    sortEntries,
 
     handlebars: {
       formatLink

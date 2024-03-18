@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import { Config, Options } from './types';
 import { backgroundConverter } from './converters/background-converter';
 import { helpers as buildHelpers } from './helpers';
+import { demoConverter } from './converters/demo-converter';
 
 function errorColor(str: string) {
   return `\x1b[31m${str}\x1b[0m`;
@@ -45,5 +46,6 @@ function errorColor(str: string) {
 
   // Converters
   const options: Options = { output: opts.output, helpers, config };
-  await backgroundConverter(opts.data, options);
+  // await backgroundConverter(opts.data, options);
+  await demoConverter(opts.data, options);
 })();
