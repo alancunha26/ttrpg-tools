@@ -1,3 +1,4 @@
+import { markdownTable } from 'markdown-table';
 import {
   ArrEntry,
   BonusEntry,
@@ -15,12 +16,18 @@ import {
   ListEntry,
   OptionsEntry,
   QuoteEntry,
+  TableCell,
   TableEntry
 } from '../types';
 
 function isItemType(value: any): value is ItemEntry {
   const itemType = ['item', 'itemSpell', 'itemSub'] as const;
   return itemType.includes(value.type);
+}
+
+function noTitle(value: Entry): boolean {
+  const noTitleTypes = ['item', 'itemSpell', 'itemSub', 'inset', 'insetReadaloud'];
+  return typeof value === 'string' || !noTitleTypes.includes(value.type);
 }
 
 interface State {
@@ -59,17 +66,16 @@ export const MarkdownBuilder = (context: Context) => {
       return output;
     }
 
-    if ('name' in entry && entry.name) {
-      output += `${nameToMarkdown(entry, state)}\n\n`;
+    if ('name' in entry && entry.name && noTitle(entry)) {
+      output += `${nameToMarkdown(entry.name, state)}\n\n`;
     }
 
     if (entry.type === 'list') {
-      output += listToMarkdown(entry, state);
+      output += listToMarkdown(entry, { ...state, listLevel: 0 });
     }
 
     if (entry.type === 'table') {
       output += tableToMarkdown(entry, state);
-      return '';
     }
 
     if (entry.type === 'quote') {
@@ -82,7 +88,6 @@ export const MarkdownBuilder = (context: Context) => {
 
     if (entry.type === 'inset') {
       output += insetToMarkdown(entry, state);
-      return '';
     }
 
     if (entry.type === 'link') {
@@ -95,7 +100,6 @@ export const MarkdownBuilder = (context: Context) => {
 
     if (isItemType(entry)) {
       output += itemToMarkdown(entry, state);
-      return '';
     }
 
     if (entry.type === 'inline' || entry.type === 'inlineBlock') {
@@ -118,25 +122,9 @@ export const MarkdownBuilder = (context: Context) => {
     return `${text}`;
   }
 
-  function nameToMarkdown(entry: Entry, state: State): string {
-    if (typeof entry === 'string' || !('name' in entry && entry.name)) {
-      return '';
-    }
-
-    if (entry.type === 'item' && entry.name) {
-      return `**${entry.name}.** `;
-    }
-
-    if (entry.type === 'itemSub' && entry.name) {
-      return `*${entry.name}.* `;
-    }
-
-    if (entry.type === 'itemSpell' && entry.name) {
-      return `${entry.name}. `;
-    }
-
+  function nameToMarkdown(name: string, state: State): string {
     const heading = Array(state.headingLevel).fill('#').join('');
-    return `${heading} ${entry.name}`;
+    return `${heading} ${name}`;
   }
 
   function bonusToMarkdown(bonus: BonusEntry, state: State): string {
@@ -156,20 +144,42 @@ export const MarkdownBuilder = (context: Context) => {
     const subLevel = state.listLevel + 1;
     const baseSpacing = Array(state.listLevel).fill(tabs).join('');
     const subSpacing = Array(subLevel).fill(tabs).join('');
+    const sufix = item.name?.endsWith(':') ? '' : '.';
     let output = state.index === 0 ? '' : baseSpacing;
 
     if ('name' in item && item.name) {
-      output += nameToMarkdown(item, state);
+      if (item.type === 'item') {
+        output += `**${item.name}${sufix}** `;
+      }
+
+      if (item.type === 'itemSub') {
+        output += `*${item.name}${sufix}* `;
+      }
+
+      if (item.type === 'itemSpell' && item.name) {
+        output += `${item.name}${sufix} `;
+      }
     }
 
     if (item.entry) {
-      output += entryToMarkdown(item.entry, { ...state, nowrap: true });
+      if (typeof item.entry === 'string') {
+        output += textToMarkdown(item.entry, state);
+      } else {
+        output += entryToMarkdown(item.entry, state);
+      }
     }
 
     if ('entries' in item && item.entries) {
       item.entries.forEach((entry, i) => {
-        if (i !== 0) output += `\n${subSpacing}`;
-        output += entryToMarkdown(entry, { ...state, index: i, nowrap: true });
+        if (i !== 0) {
+          output += `\n${subSpacing}`;
+        }
+
+        if (typeof entry === 'string') {
+          output += textToMarkdown(entry, state);
+        } else {
+          output += entryToMarkdown(entry, state);
+        }
       });
     }
 
@@ -204,13 +214,15 @@ export const MarkdownBuilder = (context: Context) => {
         }
       }
 
+      const prepend = `${breakline}${spacing}${prefix}`;
+
       if (typeof item === 'string') {
-        output += `${breakline}${spacing}${prefix} ${textToMarkdown(item, nextState)}`;
+        output += `${prepend} ${textToMarkdown(item, nextState)}`;
         return;
       }
 
       if (isItemType(item)) {
-        output += `${breakline}${spacing}${prefix} ${itemToMarkdown(item, nextState)}`;
+        output += `${prepend} ${itemToMarkdown(item, nextState)}`;
         return;
       }
 
@@ -226,8 +238,65 @@ export const MarkdownBuilder = (context: Context) => {
     return output;
   }
 
-  function tableToMarkdown(table: TableEntry, state: State): string {
+  function tableCellToMarkdown(cell: TableCell, state: State): string {
+    // console.log('tableCellToMarkdow', cell);
+    if (typeof cell === 'string') return textToMarkdown(cell, state);
     return '';
+  }
+
+  function tableToMarkdown(table: TableEntry, state: State): string {
+    let array: string[][] = [];
+
+    if (table.colLabelGroups && table.colLabelGroups.length) {
+      const bigger = table.colLabelGroups
+        .slice()
+        .sort((a, b) => (b.colLabels?.length || -1) - (a.colLabels?.length || -1))[0];
+
+      const groups = table.colLabelGroups.map(o => {
+        const length = (bigger.colLabels?.length || 0) - (o.colLabels?.length || 0);
+        const fill = Array(length).fill('') as string[];
+        return [...fill, ...(o.colLabels || [])];
+      });
+
+      for (let index = 0; index < groups.length; index += 1) {
+        const group = groups[index];
+        for (let i = 0; i < group.length; i += 1) {
+          const col = group[i];
+          if (!array[i]) {
+            array[i] = [col];
+          } else {
+            array[i][index] = col;
+          }
+        }
+      }
+    }
+
+    if (table.colLabels) {
+      array.push(table.colLabels);
+    }
+
+    const rows = table.rows.map(row => {
+      if (Array.isArray(row)) {
+        return row.map(cell => tableCellToMarkdown(cell, state));
+      }
+
+      if (Array.isArray(row.row)) {
+        return row.row.map(cell => tableCellToMarkdown(cell, state));
+      }
+
+      return [tableCellToMarkdown(row.row, state)];
+    });
+
+    array.push(...rows);
+    let output = '';
+
+    if (table.caption) {
+      console.log('table.caption', table.caption);
+      output += `**${table.caption}**\n\n`;
+    }
+
+    output += markdownTable(array);
+    return output;
   }
 
   function imageToMarkdown(image: ImageEntry, state: State): string {
@@ -257,7 +326,10 @@ export const MarkdownBuilder = (context: Context) => {
   }
 
   function insetToMarkdown(inset: InsetEntry, state: State): string {
-    return '';
+    const calloutType = inset.type === 'inset' ? 'INFO' : 'QUOTE';
+    let output = `> [!${calloutType}] ${inset.name}\n`;
+    output += entriesToMarkdown(inset.entries, state).replace(/^/gm, '> ');
+    return output;
   }
 
   function inlineToMarkdown(inline: InlineEntry | InlineBlockEntry, state: State): string {

@@ -2,6 +2,7 @@
   "linkStyle": "wikilink",
   "imageWidth": 200,
   "identation": 2,
+  "useDiceRoller": false,
 
   "sources": [
     "DMG",

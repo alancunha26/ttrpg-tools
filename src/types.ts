@@ -37,6 +37,7 @@ export interface Config {
   imageWidth: number;
   sources: SourceCode[];
   identation: number;
+  useDiceRoler: boolean;
 }
 
 export interface Options {
@@ -358,13 +359,32 @@ export type ItemEntry = BaseItemEntry | SubItemEntry | SpellItemEntry;
  * TABLE ENTRY
  */
 
+export interface TableRollEntry {
+  type: 'cell';
+  roll: {
+    exact?: number;
+    min?: number;
+    max?: number;
+    pad?: boolean;
+  };
+}
+
+export type TableCell = string | BulletListEntry | TableRollEntry;
+
+export interface TableIdentFirstRow {
+  type: 'row';
+  style: 'row-ident-first';
+  row: TableCell | TableCell[];
+}
+
+export type TableRow = TableCell[] | TableIdentFirstRow;
+
 export interface TableEntry {
   type: 'table';
   caption?: string;
-  colLabels: string[];
-  colStyles: string[];
-  rows: string[];
-  name?: string;
+  colLabelGroups?: { colLabels?: string[] }[];
+  colLabels?: string[];
+  rows: TableRow[];
 }
 
 /**
@@ -407,7 +427,7 @@ export interface EntriesEntry {
  */
 
 export interface InsetEntry {
-  type: 'inset';
+  type: 'inset' | 'insetReadaloud';
   entries: Entry[];
   name?: string;
 }
