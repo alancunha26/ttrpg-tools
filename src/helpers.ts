@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Config, Entity, FluffEntity, EntityType, Entry } from './types';
+import { Config, Entity, FluffEntity, EntityType, Entry, ShortAttribute } from './types';
 
 export const helpers = (config: Config, output: string) => {
   const { sources, linkStyle, paths } = config;
@@ -74,6 +74,34 @@ export const helpers = (config: Config, output: string) => {
     return linkStyle === 'wikilink' ? `[[${vaultPath}]]` : `[${name}](/${vaultPath}.md)`;
   }
 
+  function getAttrName(attr: ShortAttribute): string {
+    if (attr === 'str') {
+      return 'Strength';
+    }
+
+    if (attr === 'con') {
+      return 'Constitution';
+    }
+
+    if (attr === 'dex') {
+      return 'Dexterity';
+    }
+
+    if (attr === 'int') {
+      return 'Intelligence';
+    }
+
+    if (attr === 'cha') {
+      return 'Charisma';
+    }
+
+    if (attr === 'wis') {
+      return 'Wisdom';
+    }
+
+    return attr;
+  }
+
   function numberToRoman(num: number, upper?: boolean): string {
     let string = '';
     const roman = {
@@ -133,6 +161,7 @@ export const helpers = (config: Config, output: string) => {
     numberToRoman,
     sortEntries,
     convertToValidFilename,
+    getAttrName,
 
     handlebars: {
       formatLink

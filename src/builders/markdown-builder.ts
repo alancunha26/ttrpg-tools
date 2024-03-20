@@ -1,9 +1,13 @@
 import { markdownTable } from 'markdown-table';
 import {
+  AbilityAttackModEntry,
+  AbilityDcEntry,
+  AbilityGenericEntry,
   ArrEntry,
   BonusEntry,
   Context,
   CopyEntity,
+  DiceEntry,
   Entity,
   Entry,
   FluffEntity,
@@ -14,20 +18,33 @@ import {
   ItemEntry,
   LinkEntry,
   ListEntry,
+  OptFeatureEntry,
   OptionsEntry,
   QuoteEntry,
   TableCell,
-  TableEntry
+  TableEntry,
+  VariantEntry
 } from '../types';
-import { HtmlBuilder } from './html-builder';
 
 function isItemType(value: any): value is ItemEntry {
   const itemType = ['item', 'itemSpell', 'itemSub'] as const;
   return itemType.includes(value.type);
 }
 
-function noTitle(value: Entry): boolean {
-  const noTitleTypes = ['item', 'itemSpell', 'itemSub', 'inset', 'insetReadaloud'];
+function hasTitle(value: Entry): boolean {
+  const noTitleTypes = [
+    'item',
+    'itemSpell',
+    'itemSub',
+    'inset',
+    'insetReadaloud',
+    'abilityDc',
+    'abilityAttackMod',
+    'abilityGeneric',
+    'variant',
+    'variantSub'
+  ];
+
   return typeof value === 'string' || !noTitleTypes.includes(value.type);
 }
 
@@ -38,6 +55,7 @@ interface State {
   fluff?: FluffEntity;
   entity?: Entity;
   nowrap?: boolean;
+  notitle?: boolean;
 }
 
 const defaultState: State = {
@@ -51,7 +69,6 @@ export const MarkdownBuilder = (context: Context) => {
   const { config, helpers: _ } = options;
   const { imageWidth, identation, alwaysIncreaseHeadingLevel } = config;
   const tabs = Array(identation).fill(' ').join('');
-  const htmlBuilder = HtmlBuilder(context);
 
   function entriesToMarkdown(entries: Entry[], state: State): string {
     let output = '';
@@ -73,12 +90,12 @@ export const MarkdownBuilder = (context: Context) => {
     // to write on the body, here instead I prefer to ignore this and keep heading levels
     // that make sense by default, to disable this functionality pass
     // `awaysIncreaseHeadingLevel` as true in the config file.
-    if ('name' in entry && entry.name && noTitle(entry)) {
+    if ('name' in entry && entry.name && hasTitle(entry) && !state.notitle) {
       output += `${nameToMarkdown(entry.name, nextState)}\n\n`;
       if (!alwaysIncreaseHeadingLevel) nextState.headingLevel += 1;
     }
 
-    if (noTitle(entry) && alwaysIncreaseHeadingLevel) {
+    if (hasTitle(entry) && alwaysIncreaseHeadingLevel) {
       nextState.headingLevel += 1;
     }
 
@@ -99,10 +116,6 @@ export const MarkdownBuilder = (context: Context) => {
       output += imageToMarkdown(entry, nextState);
     }
 
-    if (entry.type === 'inset') {
-      output += insetToMarkdown(entry, nextState);
-    }
-
     if (entry.type === 'link') {
       output += linkToMarkdown(entry, nextState);
     }
@@ -111,8 +124,36 @@ export const MarkdownBuilder = (context: Context) => {
       output += optionsToMarkdown(entry, nextState);
     }
 
+    if (entry.type === 'dice') {
+      output += diceToMarkdown(entry, nextState);
+    }
+
+    if (entry.type === 'abilityDc') {
+      output += abilityDcToMarkdown(entry, nextState);
+    }
+
+    if (entry.type === 'abilityAttackMod') {
+      output += abilityAttackModToMarkdown(entry, nextState);
+    }
+
+    if (entry.type === 'abilityGeneric') {
+      output += abilityGenericToMarkdown(entry, nextState);
+    }
+
+    if (entry.type === 'optfeature') {
+      output += optFeatureToMarkdown(entry, nextState);
+    }
+
     if (isItemType(entry)) {
       output += itemToMarkdown(entry, nextState);
+    }
+
+    if (entry.type === 'inset' || entry.type === 'insetReadaloud') {
+      output += insetToMarkdown(entry, nextState);
+    }
+
+    if (entry.type === 'variant' || entry.type === 'variantSub') {
+      output += variantToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'inline' || entry.type === 'inlineBlock') {
@@ -125,6 +166,10 @@ export const MarkdownBuilder = (context: Context) => {
 
     if (entry.type === 'entries' || entry.type === 'section') {
       output += entriesToMarkdown(entry.entries, nextState);
+    }
+
+    if (entry.type === 'statblock' || entry.type === 'statblockInline') {
+      return '';
     }
 
     return output;
@@ -227,26 +272,93 @@ export const MarkdownBuilder = (context: Context) => {
         }
       }
 
-      const prepend = `${breakline}${spacing}${prefix}`;
-
-      if (typeof item === 'string') {
-        output += `${prepend} ${textToMarkdown(item, nextState)}`;
-        return;
-      }
-
-      if (isItemType(item)) {
-        output += `${prepend} ${itemToMarkdown(item, nextState)}`;
-        return;
-      }
-
-      if (item.type === 'list') {
+      if (typeof item !== 'string' && item.type === 'list') {
         nextState.listLevel += 1;
         output += `\n${listToMarkdown(item, nextState)}`;
         return;
       }
 
-      output += entryToMarkdown(item, nextState);
+      const prepend = `${breakline}${spacing}${prefix}`;
+      output += `${prepend} ${entryToMarkdown(item, {
+        ...nextState,
+        notitle: true,
+        nowrap: true
+      })}`;
     });
+
+    return output;
+  }
+
+  function diceToMarkdown(dice: DiceEntry, state: State): string {
+    let output = '';
+
+    dice.toRoll.forEach((roll, index) => {
+      const prefix = index !== 0 ? '+' : '';
+      const number = roll.number >= 1 ? roll.number : 1;
+      const sufix = roll.modifier && !roll.hideModifier ? `+${roll.modifier}` : '';
+      output += `${prefix}${number}d${roll.faces}${sufix}`;
+    });
+
+    return output;
+  }
+
+  function abilityDcToMarkdown(ability: AbilityDcEntry, state: State): string {
+    let output = `**${ability.name} save DC** = 8 + your proficiency bonus + your `;
+
+    ability.attributes.forEach((attr, index) => {
+      const prefix = index !== 0 ? ' or ' : '';
+      output += `${prefix}${_.getAttrName(attr)}`;
+    });
+
+    output += ' modifier';
+
+    if (ability.attributes.length > 1) {
+      output += ' (your choice)';
+    }
+
+    return output;
+  }
+
+  function abilityAttackModToMarkdown(attack: AbilityAttackModEntry, state: State): string {
+    let output = `**${attack.name} attack modifier** = your proficiency bonus + your `;
+
+    attack.attributes.forEach((attr, index) => {
+      const prefix = index !== 0 ? ' or ' : '';
+      output += `${prefix}${_.getAttrName(attr)}`;
+    });
+
+    output += ' modifier';
+
+    if (attack.attributes.length > 1) {
+      output += ' (your choice)';
+    }
+
+    return output;
+  }
+
+  function abilityGenericToMarkdown(generic: AbilityGenericEntry, state: State): string {
+    let output = '';
+
+    if (generic.name) {
+      output += `**${generic.name}** = `;
+    }
+
+    output += generic.text;
+
+    if (generic.attributes) {
+      output += ' ';
+
+      generic.attributes.forEach((attr, index) => {
+        const prefix = index !== 0 ? ' or ' : '';
+        output += `${prefix}${_.getAttrName(attr)}`;
+      });
+
+      output += ' modifier';
+
+      if (generic.attributes.length > 1) {
+        output += ' (your choice)';
+      }
+    }
 
     return output;
   }
@@ -272,9 +384,22 @@ export const MarkdownBuilder = (context: Context) => {
       return output;
     }
 
-    // Converts the content of table cells to minified html
-    // because markdown tables are not good with nesting complex layouts.
-    return htmlBuilder.entryToHtml(cell);
+    // TODO: create a inline way to draw lists
+    if (cell.type === 'list') {
+      return '';
+    }
+
+    // TODO: create a inline way to draw entries
+    if (cell.type === 'entries') {
+      return '';
+    }
+
+    // TODO: create a inline way to draw sections
+    if (cell.type === 'section') {
+      return '';
+    }
+
+    return entryToMarkdown(cell, { ...state, notitle: true, nowrap: true });
   }
 
   function tableToMarkdown(table: TableEntry, state: State): string {
@@ -350,8 +475,9 @@ export const MarkdownBuilder = (context: Context) => {
     });
 
     if (quote.by) {
-      output += `\n\n— ${quote.by}`;
+      output += `\n\n*— ${quote.by}`;
       if (quote.from) output += `, ${quote.from}`;
+      output += '*';
     }
 
     return output;
@@ -359,8 +485,20 @@ export const MarkdownBuilder = (context: Context) => {
 
   function insetToMarkdown(inset: InsetEntry, state: State): string {
     const calloutType = inset.type === 'inset' ? 'INFO' : 'QUOTE';
-    let output = `> [!${calloutType}] ${inset.name}\n`;
-    output += entriesToMarkdown(inset.entries, state).replace(/^/gm, '> ');
+    const nextState = { ...state, headingLevel: defaultState.headingLevel };
+
+    let output = `> [!${calloutType}]+ ${inset.name}\n`;
+    output += entriesToMarkdown(inset.entries, nextState).replace(/^/gm, '> ');
+
+    return output;
+  }
+
+  function variantToMarkdown(inset: VariantEntry, state: State): string {
+    const calloutType = inset.type === 'variant' ? 'EXAMPLE' : 'NOTE';
+    const nextState = { ...state, headingLevel: defaultState.headingLevel };
+
+    let output = `> [!${calloutType}]+ ${inset.name}\n`;
+    output += entriesToMarkdown(inset.entries, nextState).replace(/^/gm, '> ');
     return output;
   }
 
@@ -417,6 +555,13 @@ export const MarkdownBuilder = (context: Context) => {
     }
 
     return entries;
+  }
+
+  function optFeatureToMarkdown(opt: OptFeatureEntry, state: State): string {
+    let output = '';
+    if (opt.prerequisite) output += `***${opt.prerequisite}***\n\n`;
+    output += entriesToMarkdown(opt.entries, state);
+    return output;
   }
 
   function copyEntries(copy: CopyEntity, fluff?: boolean): Entry[] {

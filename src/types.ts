@@ -55,6 +55,12 @@ export interface Context {
 }
 
 /**
+ * ATTRIBUTES
+ */
+
+export type ShortAttribute = 'str' | 'con' | 'dex' | 'int' | 'wis' | 'cha';
+
+/**
  * PREREQUISITE
  */
 
@@ -225,7 +231,80 @@ export type Entry =
   | LinkEntry
   | OptionsEntry
   | BonusEntry
-  | SectionEntry;
+  | SectionEntry
+  | DiceEntry
+  | AbilityDcEntry
+  | AbilityAttackModEntry
+  | AbilityGenericEntry
+  | OptFeatureEntry
+  | VariantEntry
+  | StatblockInlineEntry
+  | StatblockEntry;
+
+/**
+ * TODO: implement statblock entries
+ * STATBLOCK ENTRY
+ */
+
+export interface StatblockInlineEntry {
+  type: 'statblockInline';
+}
+
+export interface StatblockEntry {
+  type: 'statblock';
+}
+
+/*
+ * VARIANT ENTRY
+ */
+
+export interface VariantEntry {
+  type: 'variant' | 'variantSub';
+  entries: Entry[];
+  name?: string;
+}
+
+/**
+ * OPTIONAL FEATURE ENTRY
+ */
+
+export interface OptFeatureEntry {
+  type: 'optfeature';
+  entries: Entry[];
+  name?: string;
+  prerequisite?: string;
+}
+
+/**
+ * ABILITY DC ENTRY
+ */
+
+export interface AbilityDcEntry {
+  type: 'abilityDc';
+  attributes: ShortAttribute[];
+  name: string;
+}
+
+/**
+ * ABILITY ATTACK MOD ENTRY
+ */
+
+export interface AbilityAttackModEntry {
+  type: 'abilityAttackMod';
+  attributes: ShortAttribute[];
+  name: string;
+}
+
+/**
+ * ABILITY GENERIC MOD ENTRY
+ */
+
+export interface AbilityGenericEntry {
+  type: 'abilityGeneric';
+  attributes?: ShortAttribute[];
+  name?: string;
+  text: string;
+}
 
 /**
  * OPTIONS ENTRY
@@ -335,7 +414,12 @@ export type ListEntry =
  * DICE ENTRY
  */
 
-export interface DiceToRoll {}
+export interface DiceToRoll {
+  number: number;
+  faces: number;
+  modifier?: number;
+  hideModifier?: boolean;
+}
 
 export interface DiceEntry {
   type: 'dice';
