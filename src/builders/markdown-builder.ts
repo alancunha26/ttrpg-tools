@@ -459,9 +459,9 @@ export const MarkdownBuilder = (context: Context) => {
   function imageToMarkdown(image: ImageEntry, state: State): string {
     const { entity, fluff } = state;
     const baseUrl = 'https://5e.tools/img';
-    const url = `${baseUrl}/${image.href.path}`;
+    const url = new URL(`${baseUrl}/${image.href.path}`);
     const title = image.title || entity?.name || fluff?.name;
-    return `![${title}|${imageWidth}](${url})`;
+    return `![${title}|${imageWidth}](${url.href})`;
   }
 
   function quoteToMarkdown(quote: QuoteEntry, state: State): string {
@@ -510,7 +510,7 @@ export const MarkdownBuilder = (context: Context) => {
   }
 
   function linkToMarkdown(link: LinkEntry, state: State): string {
-    const url = link.href.type === 'external' ? link.href.url : link.href.path;
+    const url = link.href.type === 'external' ? new URL(link.href.url).href : link.href.path;
     return `[${link.text}](${url})`;
   }
 
