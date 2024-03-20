@@ -12,7 +12,7 @@ function errorColor(str: string) {
 
 (async function main() {
   const DEFAULT_CONFIG = path.resolve(process.cwd(), 'example/config.json');
-  const DEFAULT_OUTPUT = path.resolve(process.cwd(), 'compendium');
+  const DEFAULT_OUTPUT = path.resolve(process.cwd(), 'zcompendium');
 
   const program = new Command();
 
@@ -46,6 +46,6 @@ function errorColor(str: string) {
 
   // Converters
   const options: Options = { output: opts.output, helpers, config };
-  // await backgroundConverter(opts.data, options);
+  await backgroundConverter(opts.data, options);
   await demoConverter(opts.data, options);
 })();

@@ -32,12 +32,13 @@ export type EntityType = keyof EntityPaths;
 export interface Config {
   sourcesPath: string;
   linkStyle: 'wikilink' | 'markdown';
-  templates: Omit<EntityPaths, 'sources'>;
+  templates: EntityPaths;
   paths: EntityPaths;
   imageWidth: number;
   sources: SourceCode[];
   identation: number;
   useDiceRoler: boolean;
+  alwaysIncreaseHeadingLevel: boolean;
 }
 
 export interface Options {
@@ -331,6 +332,18 @@ export type ListEntry =
   | RomanListEntry;
 
 /**
+ * DICE ENTRY
+ */
+
+export interface DiceToRoll {}
+
+export interface DiceEntry {
+  type: 'dice';
+  rollable: boolean;
+  toRoll: DiceToRoll[];
+}
+
+/**
  * ITEM ENTRIES
  */
 
@@ -369,7 +382,7 @@ export interface TableRollEntry {
   };
 }
 
-export type TableCell = string | BulletListEntry | TableRollEntry;
+export type TableCell = Entry | TableRollEntry;
 
 export interface TableIdentFirstRow {
   type: 'row';

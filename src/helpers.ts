@@ -51,12 +51,18 @@ export const helpers = (config: Config, output: string) => {
     return JSON.parse(raw.toString());
   }
 
+  function convertToValidFilename(text: string): string {
+    return text.replace(/[\/|\\:*?"<>]/g, ' ');
+  }
+
   function getVaultPath(name: string, type: EntityType): string {
-    return path.join(paths[type], name);
+    const title = convertToValidFilename(name);
+    return path.join(paths[type], title);
   }
 
   function getFilePath(name: string, type: EntityType): string {
-    return path.resolve(process.cwd(), output, paths[type], `${name}.md`);
+    const title = convertToValidFilename(name);
+    return path.resolve(process.cwd(), output, paths[type], `${title}.md`);
   }
 
   function getDirPath(type: EntityType): string {
@@ -126,6 +132,7 @@ export const helpers = (config: Config, output: string) => {
     getDirPath,
     numberToRoman,
     sortEntries,
+    convertToValidFilename,
 
     handlebars: {
       formatLink

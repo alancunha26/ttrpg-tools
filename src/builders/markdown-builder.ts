@@ -19,6 +19,7 @@ import {
   TableCell,
   TableEntry
 } from '../types';
+import { HtmlBuilder } from './html-builder';
 
 function isItemType(value: any): value is ItemEntry {
   const itemType = ['item', 'itemSpell', 'itemSub'] as const;
@@ -48,8 +49,9 @@ const defaultState: State = {
 export const MarkdownBuilder = (context: Context) => {
   const { options, entities, fluffs } = context;
   const { config, helpers: _ } = options;
-  const { imageWidth, identation } = config;
+  const { imageWidth, identation, alwaysIncreaseHeadingLevel } = config;
   const tabs = Array(identation).fill(' ').join('');
+  const htmlBuilder = HtmlBuilder(context);
 
   function entriesToMarkdown(entries: Entry[], state: State): string {
     let output = '';
@@ -60,58 +62,69 @@ export const MarkdownBuilder = (context: Context) => {
   function entryToMarkdown(entry: Entry, state: State): string {
     const first = state.index === 0;
     let output = first || state.nowrap ? '' : '\n\n';
+    let nextState = { ...state };
 
     if (typeof entry === 'string') {
       output += textToMarkdown(entry, state);
       return output;
     }
 
+    // The original parser from 5eTools increases the heading level even if there's no name
+    // to write on the body, here instead I prefer to ignore this and keep heading levels
+    // that make sense by default, to disable this functionality pass
+    // `awaysIncreaseHeadingLevel` as true in the config file.
     if ('name' in entry && entry.name && noTitle(entry)) {
-      output += `${nameToMarkdown(entry.name, state)}\n\n`;
+      output += `${nameToMarkdown(entry.name, nextState)}\n\n`;
+      if (!alwaysIncreaseHeadingLevel) nextState.headingLevel += 1;
+    }
+
+    if (noTitle(entry) && alwaysIncreaseHeadingLevel) {
+      nextState.headingLevel += 1;
     }
 
     if (entry.type === 'list') {
-      output += listToMarkdown(entry, { ...state, listLevel: 0 });
+      nextState.listLevel = 0;
+      output += listToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'table') {
-      output += tableToMarkdown(entry, state);
+      output += tableToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'quote') {
-      output += quoteToMarkdown(entry, state);
+      output += quoteToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'image') {
-      output += imageToMarkdown(entry, state);
+      output += imageToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'inset') {
-      output += insetToMarkdown(entry, state);
+      output += insetToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'link') {
-      output += linkToMarkdown(entry, state);
+      output += linkToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'options') {
-      output += optionsToMarkdown(entry, state);
+      output += optionsToMarkdown(entry, nextState);
     }
 
     if (isItemType(entry)) {
-      output += itemToMarkdown(entry, state);
+      output += itemToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'inline' || entry.type === 'inlineBlock') {
-      output += inlineToMarkdown(entry, state);
+      output += inlineToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'bonus' || entry.type === 'bonusSpeed') {
-      output += bonusToMarkdown(entry, state);
+      output += bonusToMarkdown(entry, nextState);
     }
 
     if (entry.type === 'entries' || entry.type === 'section') {
-      output += entriesToMarkdown(entry.entries, { ...state, headingLevel: state.headingLevel + 1 });
+      output += entriesToMarkdown(entry.entries, nextState);
     }
 
     return output;
@@ -239,9 +252,29 @@ export const MarkdownBuilder = (context: Context) => {
   }
 
   function tableCellToMarkdown(cell: TableCell, state: State): string {
-    // console.log('tableCellToMarkdow', cell);
-    if (typeof cell === 'string') return textToMarkdown(cell, state);
-    return '';
+    if (typeof cell === 'string') {
+      return textToMarkdown(cell, state);
+    }
+
+    if (cell.type === 'cell') {
+      let output = '';
+
+      if (cell.roll.exact) {
+        output = cell.roll.exact < 10 && cell.roll.pad ? `0${cell.roll.exact}` : cell.roll.exact.toString();
+      }
+
+      if (cell.roll.min && cell.roll.max) {
+        const min = cell.roll.min < 10 && cell.roll.pad ? `0${cell.roll.min}` : cell.roll.min;
+        const max = cell.roll.max < 10 && cell.roll.pad ? `0${cell.roll.max}` : cell.roll.max;
+        output = `${min}-${max}`;
+      }
+
+      return output;
+    }
+
+    // Converts the content of table cells to minified html
+    // because markdown tables are not good with nesting complex layouts.
+    return htmlBuilder.entryToHtml(cell);
   }
 
   function tableToMarkdown(table: TableEntry, state: State): string {
@@ -291,7 +324,6 @@ export const MarkdownBuilder = (context: Context) => {
     let output = '';
 
     if (table.caption) {
-      console.log('table.caption', table.caption);
       output += `**${table.caption}**\n\n`;
     }
 
@@ -387,19 +419,19 @@ export const MarkdownBuilder = (context: Context) => {
     return entries;
   }
 
-  function copyToMarkdown(copy: CopyEntity, state: State, fluff?: boolean): string {
+  function copyEntries(copy: CopyEntity, fluff?: boolean): Entry[] {
     const findEntity = (e: Entity | FluffEntity) => e.name === copy.name;
     const original = fluff ? fluffs.find(findEntity) : entities.find(findEntity);
 
     if (!original || !original.entries) {
-      return '';
-    }
-
-    if (!copy._mod || !copy._mod.entries) {
-      return entriesToMarkdown(original.entries, state);
+      return [];
     }
 
     let entries: Entry[] = original.entries || [];
+
+    if (!copy._mod || !copy._mod.entries) {
+      return entries;
+    }
 
     if (Array.isArray(copy._mod.entries)) {
       copy._mod.entries.forEach(arrEntry => (entries = mapCopyArrEntries(arrEntry, entries)));
@@ -407,59 +439,49 @@ export const MarkdownBuilder = (context: Context) => {
       entries = mapCopyArrEntries(copy._mod.entries, entries);
     }
 
-    return entriesToMarkdown(entries, state);
+    return entries;
   }
 
-  function fluffImagesToMarkdown(images: FluffEntity['images'], state: State): string {
-    let output = '';
-
-    if (Array.isArray(images)) {
-      images.forEach(img => (output += imageToMarkdown(img, state)));
-    } else if (images?.item) {
-      output += imageToMarkdown(images.item, state);
-    }
-
-    return output;
-  }
-
-  function fluffToMarkdown(fluff: FluffEntity, state: State): string {
-    let output = '';
-
-    if (fluff.images) {
-      output += fluffImagesToMarkdown(fluff.images, state);
-    }
-
-    if (fluff.entries) {
-      output += entriesToMarkdown(fluff.entries, state);
-    }
-
-    if (fluff._copy) {
-      output += copyToMarkdown(fluff._copy, state, true);
-    }
-
-    return output;
-  }
-
-  return function entityToMarkdown(entity: Entity, fluff?: FluffEntity): string {
+  function entityToMarkdown(entity: Entity, fluff?: FluffEntity): string {
     const state: State = { ...defaultState, entity, fluff: fluff };
-    let output = '';
+    let fluffEntries: Entry[] = [];
+    let entityEntries: Entry[] = [];
 
-    if (fluff) {
-      output += fluffToMarkdown(fluff, state);
+    if (fluff?.entries) {
+      fluffEntries.push(...fluff.entries);
+    }
+
+    if (fluff?._copy) {
+      fluffEntries.push(...copyEntries(fluff._copy, true));
     }
 
     if (entity.entries) {
-      output += entriesToMarkdown(entity.entries, state);
+      entityEntries.push(...entity.entries);
     }
 
     if (entity._copy) {
-      output += copyToMarkdown(entity._copy, state);
+      entityEntries.push(...copyEntries(entity._copy));
     }
 
-    // if (entity.name === 'Variant Entertainer (Gladiator)') {
-    //   console.log(entity.name, output);
-    // }
+    let entries: Entry[] = [];
 
-    return output;
+    // Add the fluff images to the start of the body
+    if (fluff?.images) {
+      if (Array.isArray(fluff.images)) {
+        entries.push(...fluff.images);
+      } else {
+        entries.push(fluff.images.item);
+      }
+    }
+
+    // Add the mechanics fluffs entries first and then the mechanics
+    entries.push(...fluffEntries, ...entityEntries);
+    return entriesToMarkdown(entries, state);
+  }
+
+  return {
+    entityToMarkdown,
+    entriesToMarkdown,
+    entryToMarkdown
   };
 };

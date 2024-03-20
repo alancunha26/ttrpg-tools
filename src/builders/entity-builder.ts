@@ -8,13 +8,13 @@ import { sources } from '../sources';
 
 export const EntityBuilder = (context: Context) => {
   const { options, fluffs, type } = context;
-  const { config, output, helpers: _ } = options;
+  const { config, helpers: _ } = options;
 
   if (type === 'sources') {
     throw new Error('EntityType.sources is not implemented');
   }
 
-  const entityToMarkdown = MarkdownBuilder(context);
+  const markdownBuilder = MarkdownBuilder(context);
   return async (entity: Entity) => {
     const fluff = _.findFluff(entity, fluffs);
     const entityName = entity.name.replace('Variant ', '');
@@ -31,7 +31,7 @@ export const EntityBuilder = (context: Context) => {
       source: sources.find(source => source.code === entity.source)!,
       created: moment().format('YYYY-DD-MM'),
       srd: entity.srd ? 'true' : 'false',
-      body: entityToMarkdown(entity, fluff)
+      body: markdownBuilder.entityToMarkdown(entity, fluff)
     };
 
     return {

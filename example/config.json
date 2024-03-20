@@ -3,6 +3,7 @@
   "imageWidth": 200,
   "identation": 2,
   "useDiceRoller": false,
+  "alwaysIncreaseHeadingLevel": false,
 
   "sources": [
     "DMG",
@@ -38,7 +39,8 @@
     "traps": "example/templates/trap.hbs",
     "psionics": "example/templates/psionic.hbs",
     "renderdemo": "example/templates/renderdemo.hbs",
-    "optional-features": "example/templates/optional-feature.hbs"
+    "optional-features": "example/templates/optional-feature.hbs",
+    "sources": "example/templates/source.hbs"
   },
   
   "paths": {
