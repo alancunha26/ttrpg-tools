@@ -67,7 +67,7 @@ const defaultState: State = {
 export const MarkdownBuilder = (context: Context) => {
   const { options, entities, fluffs } = context;
   const { config, helpers: _ } = options;
-  const { imageWidth, identation, alwaysIncreaseHeadingLevel } = config;
+  const { imageWidth, identation, alwaysIncreaseHeadingLevel, useHtmlTags } = config;
   const tabs = Array(identation).fill(' ').join('');
 
   function entriesToMarkdown(entries: Entry[], state: State): string {
@@ -175,9 +175,52 @@ export const MarkdownBuilder = (context: Context) => {
     return output;
   }
 
+  // NOTE: Unsupported markdown elements like kbd and colors tags are
+  // converted to html elements instead, you can disable this by
+  // settings the `useHtmlTags = false` in the config file
   function textToMarkdown(text: string, state: State): string {
-    // TODO: Write the text parser with links and queries
-    return `${text}`;
+    let output = String(text);
+
+    const bold = /{\@(bold|b)\s(.*?)}/g;
+    if (bold.test(output)) {
+      output = output.replace(bold, '**$2**');
+    }
+
+    const italic = /{\@(italic|i)\s(.*?)}/g;
+    if (italic.test(output)) {
+      output = output.replace(italic, '*$2*');
+    }
+
+    const underline = /{\@(underline|u)\s(.*?)}/g;
+    if (underline.test(output)) {
+      output = output.replace(underline, useHtmlTags ? '<u>$2</u>' : '$2');
+    }
+
+    const strike = /{\@(strike|s)\s(.*?)}/g;
+    if (strike.test(output)) {
+      output = output.replace(strike, '~~$2~~');
+    }
+
+    const color = /\{\@color\s(.*?)\}/g;
+    if (color.test(output)) {
+      output = output.replace(color, match => {
+        const base = /{\@color\s(.*?)\|(.*?)}/g;
+        const variable = /{\@color\s(.*?)\|(--.*?)}/g;
+
+        if (variable.test(match)) {
+          return match.replace(variable, useHtmlTags ? '<span style="color: var($2)">$1</span>' : '$1');
+        } else {
+          return match.replace(base, useHtmlTags ? '<span style="color: #$2">$1</span>' : '$1');
+        }
+      });
+    }
+
+    const highlight = /{\@highlight\s(.*?)}/g;
+    if (highlight.test(output)) {
+      output = output.replace(highlight, '==$1==');
+    }
+
+    return output;
   }
 
   function nameToMarkdown(name: string, state: State): string {

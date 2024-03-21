@@ -37,6 +37,7 @@ export interface Config {
   imageWidth: number;
   sources: SourceCode[];
   identation: number;
+  useHtmlTags: boolean;
   useDiceRoler: boolean;
   alwaysIncreaseHeadingLevel: boolean;
 }

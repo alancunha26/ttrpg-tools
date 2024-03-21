@@ -4,6 +4,7 @@
   "identation": 2,
   "useDiceRoller": false,
   "alwaysIncreaseHeadingLevel": false,
+  "useHtmlTags": true,
 
   "sources": [
     "DMG",
