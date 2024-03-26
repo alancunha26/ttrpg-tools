@@ -2,9 +2,9 @@
   "linkStyle": "wikilink",
   "imageWidth": 200,
   "identation": 2,
-  "useDiceRoller": false,
-  "alwaysIncreaseHeadingLevel": false,
   "useHtmlTags": true,
+  "useDiceRoller": true,
+  "alwaysIncreaseHeadingLevel": false,
 
   "sources": [
     "DMG",
@@ -25,6 +25,7 @@
   ],
   
   "templates": {
+    "sources": "example/templates/source.hbs",
     "monsters": "example/templates/monster.hbs",
     "classes": "example/templates/class.hbs",
     "subclasses": "example/templates/subclass.hbs",
@@ -42,7 +43,13 @@
     "psionics": "example/templates/psionic.hbs",
     "renderdemo": "example/templates/renderdemo.hbs",
     "optional-features": "example/templates/optional-feature.hbs",
-    "sources": "example/templates/source.hbs"
+
+    "actions": "example/templates/actions.hbs",
+    "diseases": "example/templates/diseases.hbs",
+    "conditions": "example/templates/conditions.hbs",
+    "senses": "example/templates/senses.hbs",
+    "skills": "example/templates/skills.hbs",
+    "variant-rules": "example/templates/variant-rules.hbs"
   },
   
   "paths": {
@@ -63,7 +70,15 @@
     "objects": "03 Library/Dungeons & Dragons 5e",
     "traps": "03 Library/Dungeons & Dragons 5e",
     "psionics": "03 Library/Dungeons & Dragons 5e",
-    "optional-features": "03 Library/Dungeons & Dragons 5e"
+    "rules": "03 Library/Dungeons & Dragons 5e",
+    "optional-features": "03 Library/Dungeons & Dragons 5e",
+
+    "actions": "03 Library/Dungeons & Dragons 5e",
+    "diseases": "03 Library/Dungeons & Dragons 5e",
+    "conditions": "03 Library/Dungeons & Dragons 5e",
+    "senses": "03 Library/Dungeons & Dragons 5e",
+    "skills": "03 Library/Dungeons & Dragons 5e",
+    "variant-rules": "03 Library/Dungeons & Dragons 5e"
   }
 }
 

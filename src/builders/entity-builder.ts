@@ -4,7 +4,7 @@ import moment from 'moment';
 import Handlebars from 'handlebars';
 import { Context, Entity } from '../types';
 import { MarkdownBuilder } from './markdown-builder';
-import { sources } from '../sources';
+import { SOURCES } from '../models/sources';
 
 export const EntityBuilder = (context: Context) => {
   const { options, fluffs, type } = context;
@@ -28,7 +28,7 @@ export const EntityBuilder = (context: Context) => {
     const data = {
       title: entityName,
       page: entity.page,
-      source: sources.find(source => source.code === entity.source)!,
+      source: SOURCES.find(source => source.code === entity.source)!,
       created: moment().format('YYYY-DD-MM'),
       srd: entity.srd ? 'true' : 'false',
       body: markdownBuilder.entityToMarkdown(entity, fluff)

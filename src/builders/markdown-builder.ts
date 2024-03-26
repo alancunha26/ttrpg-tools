@@ -66,8 +66,8 @@ const defaultState: State = {
 
 export const MarkdownBuilder = (context: Context) => {
   const { options, entities, fluffs } = context;
-  const { config, helpers: _ } = options;
-  const { imageWidth, identation, alwaysIncreaseHeadingLevel, useHtmlTags } = config;
+  const { config, helpers: h } = options;
+  const { imageWidth, identation, alwaysIncreaseHeadingLevel, useHtmlTags, useDiceRoller: useDiceRoler } = config;
   const tabs = Array(identation).fill(' ').join('');
 
   function entriesToMarkdown(entries: Entry[], state: State): string {
@@ -175,50 +175,408 @@ export const MarkdownBuilder = (context: Context) => {
     return output;
   }
 
+  function colorTagToMarkdown(text: string): string {
+    const color = /\{\@color\s(.*?)\}/g;
+    return text.replace(color, match => {
+      const base = /{\@color\s(.*?)\|(.*?)}/g;
+      const variable = /{\@color\s(.*?)\|(--.*?)}/g;
+
+      if (variable.test(match)) {
+        return match.replace(variable, useHtmlTags ? '<span style="color: var($2)">$1</span>' : '$1');
+      } else {
+        return match.replace(base, useHtmlTags ? '<span style="color: #$2">$1</span>' : '$1');
+      }
+    });
+  }
+
+  // Since there's no prompt feature in obsidian dice roller,
+  // I'm using the "default" value of the prompt as a replacement
+  // when there's no "default" value, I use the "(n)" annotation
+  function promptTagToMarkdown(text: string): string {
+    return text.replace(/#\$(.*?)\$#/g, (match: string, content: string) => {
+      const attributes = content.split(',');
+      let defaultValue: string | undefined;
+
+      for (const attribute of attributes) {
+        const [key, value] = attribute.split('=');
+        if (key.trim() === 'default') {
+          defaultValue = value.trim();
+          break;
+        }
+      }
+
+      return defaultValue ? defaultValue : '(n)';
+    });
+  }
+
+  function rollTagToMarkdown(roll: string, title?: string): string {
+    let output = String(roll);
+    const enabled = useDiceRoler && !roll.includes('(n)');
+
+    if (enabled) {
+      const titleText = `|text(${title || roll})`;
+      output = `\`dice: ${output}${titleText}\``;
+    } else {
+      output = String(title || roll);
+    }
+
+    // Replaces math operations
+    output = output.replace(/ceil\((.*?)\)/g, enabled ? '$1|ceil' : '$1');
+    output = output.replace(/floor\((.*?)\)/g, enabled ? '$1|floor' : '$1');
+    output = output.replace(/round\((.*?)\)/g, enabled ? '$1|round' : '$1');
+
+    return output;
+  }
+
+  function diceTagToMarkdown(text: string): string {
+    return text.replace(/{\@dice\s(.*?)}/g, (_: string, content: string) => {
+      let formula = String(content);
+      let rolls: string[] = [content];
+      let title: string | undefined;
+
+      if (formula.includes('|')) {
+        [formula, title] = formula.split('|');
+        rolls = [formula];
+      }
+
+      if (formula.includes(';')) {
+        rolls = formula.split(';');
+      }
+
+      rolls = rolls.map(roll => rollTagToMarkdown(roll, title));
+      return rolls.join('/');
+    });
+  }
+
+  function hitTagToMarkdown(text: string): string {
+    return text.replace(/{\@hit\s(.*?)}/g, (_, content: string) => {
+      let formula = String(content);
+      let rolls: string[] = [content];
+      let title: string | undefined;
+
+      if (formula.includes('|')) {
+        [formula, title] = formula.split('|');
+        rolls = [formula];
+      }
+
+      if (formula.includes(';')) {
+        rolls = formula.split(';');
+      }
+
+      rolls = rolls.map(roll => rollTagToMarkdown(`1d20${roll}`, title));
+      return rolls.join('/');
+    });
+  }
+
+  function damageTagToMarkdown(text: string): string {
+    return text.replace(/{\@damage\s(.*?)}/g, (_: string, content: string) => {
+      let formula = String(content);
+      let rolls: string[] = [content];
+      let title: string | undefined;
+
+      if (formula.includes('|')) {
+        [formula, title] = formula.split('|');
+        rolls = [formula];
+      }
+
+      if (formula.includes(';')) {
+        rolls = formula.split(';');
+      }
+
+      rolls = rolls.map(roll => rollTagToMarkdown(roll, title));
+      return rolls.join('/');
+    });
+  }
+
+  function d20TagToMarkdown(text: string): string {
+    return text.replace(/{\@d20\s(.*?)}/g, (_, content: string) => {
+      let formula = String(content);
+      let rolls: string[] = [content];
+      let title: string | undefined;
+
+      if (formula.includes('|')) {
+        [formula, title] = formula.split('|');
+        rolls = [formula];
+      }
+
+      if (formula.includes(';')) {
+        rolls = formula.split(';');
+      }
+
+      rolls = rolls.map(roll => rollTagToMarkdown(`1d20${roll}`, title));
+      return rolls.join('/');
+    });
+  }
+
+  function scaleDamageTagToMarkdown(text: string): string {
+    return text.replace(/{\@scaledamage\s(.*?)}/g, (_, content: string) => {
+      let extra: string | undefined;
+
+      if (content.includes('|')) {
+        // formula, scale, extra
+        [_, _, extra] = content.split('|');
+      }
+
+      if (extra) {
+        return rollTagToMarkdown(extra);
+      }
+
+      return content;
+    });
+  }
+
+  function scaleDiceTagToMarkdown(text: string): string {
+    return text.replace(/{\@scaledice\s(.*?)}/g, (_, content: string) => {
+      let title: string | undefined;
+      let extra: string | undefined;
+
+      if (content.includes('|')) {
+        // formula, scale, extra, type, title
+        [_, _, extra, _, title] = content.split('|');
+      }
+
+      if (extra) {
+        return rollTagToMarkdown(extra, title);
+      }
+
+      return content;
+    });
+  }
+
+  function abilityTagToMarkdown(text: string): string {
+    return text.replace(/{\@ability\s(.*?)}/g, (_, content: string) => {
+      const [formula, title] = content.split('|');
+      const [attr, value] = formula.split(' ');
+
+      const modifier = Math.floor((parseInt(value) - 10) / 2);
+      const extra = modifier < 0 ? `-${Math.abs(modifier)}` : `+${modifier}`;
+      const rollTitle = title || `${value} (${extra})`;
+
+      return rollTagToMarkdown(`1d20${extra}`, rollTitle);
+    });
+  }
+
+  function savingThrowTagToMarkdown(text: string): string {
+    return text.replace(/{\@savingThrow\s(.*?)}/g, (_, content: string) => {
+      const [formula, title] = content.split('|');
+      const [attr, value] = formula.split(' ');
+
+      const modifier = Math.floor((parseInt(value) - 10) / 2);
+      const extra = modifier < 0 ? `-${Math.abs(modifier)}` : `+${modifier}`;
+      const rollTitle = title || extra;
+
+      return rollTagToMarkdown(`1d20${extra}`, rollTitle);
+    });
+  }
+
+  function skillCheckTagToMarkdown(text: string): string {
+    return text.replace(/{\@skillCheck\s(.*?)}/g, (_, content: string) => {
+      const [formula, title] = content.split('|');
+      const [skill, value] = formula.split(' ');
+
+      const modifier = Math.floor((parseInt(value) - 10) / 2);
+      const extra = modifier < 0 ? `-${Math.abs(modifier)}` : `+${modifier}`;
+      const rollTitle = title || extra;
+
+      return rollTagToMarkdown(`1d20${extra}`, rollTitle);
+    });
+  }
+
+  function autoDiceTagToMarkdown(text: string): string {
+    return text.replace(/{\@autodice\s(.*?)}/g, (_: string, content: string) => {
+      let formula = String(content);
+      let rolls: string[] = [content];
+      let title: string | undefined;
+
+      if (formula.includes('|')) {
+        [formula, title] = formula.split('|');
+        rolls = [formula];
+      }
+
+      if (formula.includes(';')) {
+        rolls = formula.split(';');
+      }
+
+      rolls = rolls.map(roll => rollTagToMarkdown(roll, title));
+      return rolls.join('/');
+    });
+  }
+
+  function chanceTagToMarkdown(text: string): string {
+    return text.replace(/{\@chance\s(.*?)}/g, (_: string, content: string) => {
+      const [chance, title] = content.split('|');
+      return rollTagToMarkdown('1d%', title || `${chance}%`);
+    });
+  }
+
+  function hitYourSpellAttackTagToMarkdown(text: string): string {
+    return text.replace(/{\@hitYourSpellAttack(.*?)}/g, (_: string, content: string) => {
+      return content.trim() || 'your spell attack modifier';
+    });
+  }
+
+  function dcYourSpellSaveTagToMarkdown(text: string): string {
+    return text.replace(/{\@dcYourSpellSave(.*?)}/g, (_: string, content: string) => {
+      return content.trim() || 'your spell save DC';
+    });
+  }
+
+  function rechargeTagToMarkdown(text: string): string {
+    return text.replace(/{\@recharge(.*?)}/g, (_: string, content: string) => {
+      const recharge = parseInt(content.trim());
+      const title = isNaN(recharge) ? '(Recharge 6)' : `(Recharge ${recharge}-6)`;
+      return rollTagToMarkdown('1d6', title);
+    });
+  }
+
+  function conflipTagToMarkdown(text: string): string {
+    return text.replace(/{\@coinflip(.*?)}/g, (_: string, content: string) => {
+      const [title] = content.trim().split('|');
+      return rollTagToMarkdown('1d2', title || 'coinflip');
+    });
+  }
+
+  // NOTE: There's no much use in 5eTools of this tag, so I didn't implemented fully.
+  // When needed I can store the foot note texts and print at the end of the file using
+  // markdown footnotes formatting
+  function footnoteTagToMarkdown(text: string): string {
+    return text.replace(/{\@footnote(.*?)}/g, (_: string, content: string) => {
+      const [text] = content.trim().split('|');
+      return text;
+    });
+  }
+
+  function skillTagToMarkdown(text: string): string {
+    return text.replace(/{\@skill(.*?)}/g, (_: string, content: string) => {
+      const skill = content.trim();
+      return h.getVaultLink(skill, 'skills');
+    });
+  }
+
+  function senseTagToMarkdown(text: string): string {
+    return text.replace(/{\@sense(.*?)}/g, (_: string, content: string) => {
+      const [sense] = content.trim().split('|');
+      return h.getVaultLink(sense, 'senses');
+    });
+  }
+
+  function actionTagToMarkdown(text: string): string {
+    return text.replace(/{\@action(.*?)}/g, (_: string, content: string) => {
+      const [action, source, alias] = content.trim().split('|');
+      return h.getVaultLink(action, 'actions', alias);
+    });
+  }
+
+  function spellTagToMarkdown(text: string): string {
+    return text.replace(/{\@spell(.*?)}/g, (_: string, content: string) => {
+      const [spell, source, alias] = content.trim().split('|');
+      return h.getVaultLink(spell, 'spells', alias);
+    });
+  }
+
+  function itemTagToMarkdown(text: string): string {
+    return text.replace(/{\@item(.*?)}/g, (_: string, content: string) => {
+      const [item, source, alias] = content.trim().split('|');
+      return h.getVaultLink(item, 'items', alias);
+    });
+  }
+
+  function creatureTagToMarkdown(text: string): string {
+    return text.replace(/{\@creature(.*?)}/g, (_: string, content: string) => {
+      const [monster, source, alias] = content.trim().split('|');
+      return h.getVaultLink(monster, 'monsters', alias);
+    });
+  }
+
+  function backgroundTagToMarkdown(text: string): string {
+    return text.replace(/{\@background(.*?)}/g, (_: string, content: string) => {
+      const [background, source, alias] = content.trim().split('|');
+      return h.getVaultLink(background, 'backgrounds', alias);
+    });
+  }
+
+  function raceTagToMarkdown(text: string): string {
+    return text.replace(/{\@race(.*?)}/g, (_: string, content: string) => {
+      const [race, source, alias] = content.trim().split('|');
+      return h.getVaultLink(race, 'races', alias);
+    });
+  }
+
+  function optFeatureTagToMarkdown(text: string): string {
+    return text.replace(/{\@optfeature(.*?)}/g, (_: string, content: string) => {
+      const [race, source, alias] = content.trim().split('|');
+      return h.getVaultLink(race, 'optional-features', alias);
+    });
+  }
+
+  function classTagToMarkdown(text: string): string {
+    return text.replace(/{\@class\s(.*?)}/g, (_: string, content: string) => {
+      const [classe, source, alias, subclass] = content.trim().split('|');
+      return h.getVaultLink(subclass || classe, subclass ? 'subclasses' : 'classes', alias);
+    });
+  }
+
+  function classFeatureTagToMarkdown(text: string): string {
+    return text.replace(/{\@classFeature\s(.*?)}/g, (_: string, content: string) => {
+      const [feature, classe, source, level, featureSource, alias] = content.trim().split('|');
+      return h.getVaultLink(classe, 'classes', alias, feature);
+    });
+  }
+
   // NOTE: Unsupported markdown elements like kbd and colors tags are
   // converted to html elements instead, you can disable this by
-  // settings the `useHtmlTags = false` in the config file
+  // settings the `useHtmlTags = false` in the config file, this will
+  // make these tags be converted to plain text
   function textToMarkdown(text: string, state: State): string {
     let output = String(text);
 
-    const bold = /{\@(bold|b)\s(.*?)}/g;
-    if (bold.test(output)) {
-      output = output.replace(bold, '**$2**');
-    }
+    // Simple tags, these can be solved with a simple regex replace
+    output = output.replace(/{\@(bold|b)\s(.*?)}/g, '**$2**');
+    output = output.replace(/{\@(italic|i)\s(.*?)}/g, '*$2*');
+    output = output.replace(/{\@(underline|u)\s(.*?)}/g, useHtmlTags ? '<u>$2</u>' : '$2');
+    output = output.replace(/{\@(strike|s)\s(.*?)}/g, '~~$2~~');
+    output = output.replace(/{\@highlight\s(.*?)}/g, '==$1==');
+    output = output.replace(/{\@sup\s(.*?)}/g, useHtmlTags ? '<sup>$1</sup>' : '$1');
+    output = output.replace(/{\@sub\s(.*?)}/g, useHtmlTags ? '<sub>$1</sub>' : '$1');
+    output = output.replace(/{\@kbd\s(.*?)}/g, useHtmlTags ? '<kbd>$1</kbd>' : '$1');
+    output = output.replace(/{\@code\s(.*?)}/g, '`$1`');
+    output = output.replace(/{\@note\s(.*?)}/g, '*$1*');
+    output = output.replace(/{\@tip\s(.*?)\|(.*?)}/g, '$1 ($2)');
 
-    const italic = /{\@(italic|i)\s(.*?)}/g;
-    if (italic.test(output)) {
-      output = output.replace(italic, '*$2*');
-    }
+    // Unsupported tag, because it behaves specifically for 5eTools website
+    output = output.replace(/{\@style\s(.*?)\|(.*?)}/g, '$1');
+    output = output.replace(/{\@font\s(.*?)\|(.*?)}/g, '$1');
 
-    const underline = /{\@(underline|u)\s(.*?)}/g;
-    if (underline.test(output)) {
-      output = output.replace(underline, useHtmlTags ? '<u>$2</u>' : '$2');
-    }
-
-    const strike = /{\@(strike|s)\s(.*?)}/g;
-    if (strike.test(output)) {
-      output = output.replace(strike, '~~$2~~');
-    }
-
-    const color = /\{\@color\s(.*?)\}/g;
-    if (color.test(output)) {
-      output = output.replace(color, match => {
-        const base = /{\@color\s(.*?)\|(.*?)}/g;
-        const variable = /{\@color\s(.*?)\|(--.*?)}/g;
-
-        if (variable.test(match)) {
-          return match.replace(variable, useHtmlTags ? '<span style="color: var($2)">$1</span>' : '$1');
-        } else {
-          return match.replace(base, useHtmlTags ? '<span style="color: #$2">$1</span>' : '$1');
-        }
-      });
-    }
-
-    const highlight = /{\@highlight\s(.*?)}/g;
-    if (highlight.test(output)) {
-      output = output.replace(highlight, '==$1==');
-    }
+    // More complex tags, these need specific methods
+    output = colorTagToMarkdown(output);
+    output = promptTagToMarkdown(output);
+    output = diceTagToMarkdown(output);
+    output = hitTagToMarkdown(output);
+    output = damageTagToMarkdown(output);
+    output = d20TagToMarkdown(output);
+    output = scaleDamageTagToMarkdown(output);
+    output = scaleDiceTagToMarkdown(output);
+    output = abilityTagToMarkdown(output);
+    output = savingThrowTagToMarkdown(output);
+    output = skillCheckTagToMarkdown(output);
+    output = autoDiceTagToMarkdown(output);
+    output = chanceTagToMarkdown(output);
+    output = hitYourSpellAttackTagToMarkdown(output);
+    output = dcYourSpellSaveTagToMarkdown(output);
+    output = rechargeTagToMarkdown(output);
+    output = conflipTagToMarkdown(output);
+    output = footnoteTagToMarkdown(output);
+    output = skillTagToMarkdown(output);
+    output = senseTagToMarkdown(output);
+    output = spellTagToMarkdown(output);
+    output = actionTagToMarkdown(output);
+    output = itemTagToMarkdown(output);
+    output = creatureTagToMarkdown(output);
+    output = backgroundTagToMarkdown(output);
+    output = raceTagToMarkdown(output);
+    output = optFeatureTagToMarkdown(output);
+    output = classTagToMarkdown(output);
+    output = classFeatureTagToMarkdown(output);
 
     return output;
   }
@@ -237,7 +595,7 @@ export const MarkdownBuilder = (context: Context) => {
   }
 
   function optionsToMarkdown(options: OptionsEntry, state: State): string {
-    const entries = _.sortEntries(options.entries);
+    const entries = h.sortEntries(options.entries);
     return entriesToMarkdown(entries, state);
   }
 
@@ -307,11 +665,11 @@ export const MarkdownBuilder = (context: Context) => {
         }
 
         if (list.style === 'list-lower-roman') {
-          prefix = `${_.numberToRoman(number)}.`;
+          prefix = `${h.numberToRoman(number)}.`;
         }
 
         if (list.style === 'list-upper-roman') {
-          prefix = `${_.numberToRoman(number, true)}.`;
+          prefix = `${h.numberToRoman(number, true)}.`;
         }
       }
 
@@ -350,7 +708,7 @@ export const MarkdownBuilder = (context: Context) => {
 
     ability.attributes.forEach((attr, index) => {
       const prefix = index !== 0 ? ' or ' : '';
-      output += `${prefix}${_.getAttrName(attr)}`;
+      output += `${prefix}${h.getAttrName(attr)}`;
     });
 
     output += ' modifier';
@@ -367,7 +725,7 @@ export const MarkdownBuilder = (context: Context) => {
 
     attack.attributes.forEach((attr, index) => {
       const prefix = index !== 0 ? ' or ' : '';
-      output += `${prefix}${_.getAttrName(attr)}`;
+      output += `${prefix}${h.getAttrName(attr)}`;
     });
 
     output += ' modifier';
@@ -393,7 +751,7 @@ export const MarkdownBuilder = (context: Context) => {
 
       generic.attributes.forEach((attr, index) => {
         const prefix = index !== 0 ? ' or ' : '';
-        output += `${prefix}${_.getAttrName(attr)}`;
+        output += `${prefix}${h.getAttrName(attr)}`;
       });
 
       output += ' modifier';
@@ -427,19 +785,16 @@ export const MarkdownBuilder = (context: Context) => {
       return output;
     }
 
-    // TODO: create a inline way to draw lists
-    if (cell.type === 'list') {
-      return '';
-    }
-
     // TODO: create a inline way to draw entries
     if (cell.type === 'entries') {
-      return '';
+    }
+
+    // TODO: create a inline way to draw lists
+    if (cell.type === 'list') {
     }
 
     // TODO: create a inline way to draw sections
     if (cell.type === 'section') {
-      return '';
     }
 
     return entryToMarkdown(cell, { ...state, notitle: true, nowrap: true });

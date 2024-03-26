@@ -1,11 +1,14 @@
 import { helpers } from './helpers';
-import { sources } from './sources';
+import { ATTRIBUTES } from './models/attributes';
+import { SKILLS } from './models/skills';
+import { SOURCES } from './models/sources';
 
 /**
  * CONFIG
  */
 
 export interface EntityPaths {
+  // Content
   sources: string;
   monsters: string;
   classes: string;
@@ -25,6 +28,14 @@ export interface EntityPaths {
   psionics: string;
   renderdemo: string;
   'optional-features': string;
+
+  // Rules
+  actions: string;
+  diseases: string;
+  conditions: string;
+  senses: string;
+  skills: string;
+  'variant-rules': string;
 }
 
 export type EntityType = keyof EntityPaths;
@@ -38,7 +49,7 @@ export interface Config {
   sources: SourceCode[];
   identation: number;
   useHtmlTags: boolean;
-  useDiceRoler: boolean;
+  useDiceRoller: boolean;
   alwaysIncreaseHeadingLevel: boolean;
 }
 
@@ -59,7 +70,17 @@ export interface Context {
  * ATTRIBUTES
  */
 
-export type ShortAttribute = 'str' | 'con' | 'dex' | 'int' | 'wis' | 'cha';
+export type Attribute = (typeof ATTRIBUTES)[number];
+export type AttributeCode = Attribute['code'];
+export type AttributeName = Attribute['name'];
+
+/**
+ * SKILLS
+ */
+
+export type Skill = (typeof SKILLS)[number];
+export type SkillCode = Skill['code'];
+export type SkillName = Skill['name'];
 
 /**
  * PREREQUISITE
@@ -189,7 +210,7 @@ export type FeatsLearn = { [key: string]: boolean } & {
  * SOURCES
  */
 
-export type Source = (typeof sources)[number];
+export type Source = (typeof SOURCES)[number];
 export type SourceCode = Source['code'];
 export type SourceName = Source['name'];
 
@@ -282,7 +303,7 @@ export interface OptFeatureEntry {
 
 export interface AbilityDcEntry {
   type: 'abilityDc';
-  attributes: ShortAttribute[];
+  attributes: AttributeCode[];
   name: string;
 }
 
@@ -292,7 +313,7 @@ export interface AbilityDcEntry {
 
 export interface AbilityAttackModEntry {
   type: 'abilityAttackMod';
-  attributes: ShortAttribute[];
+  attributes: AttributeCode[];
   name: string;
 }
 
@@ -302,7 +323,7 @@ export interface AbilityAttackModEntry {
 
 export interface AbilityGenericEntry {
   type: 'abilityGeneric';
-  attributes?: ShortAttribute[];
+  attributes?: AttributeCode[];
   name?: string;
   text: string;
 }

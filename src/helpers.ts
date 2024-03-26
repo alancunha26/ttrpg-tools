@@ -1,6 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { Config, Entity, FluffEntity, EntityType, Entry, ShortAttribute } from './types';
+import { Config, Entity, FluffEntity, EntityType, Entry, AttributeCode, SourceCode, SkillCode } from './types';
+import { ATTRIBUTES } from './models/attributes';
+import { SOURCES } from './models/sources';
+import { SKILLS } from './models/skills';
 
 export const helpers = (config: Config, output: string) => {
   const { sources, linkStyle, paths } = config;
@@ -51,55 +54,76 @@ export const helpers = (config: Config, output: string) => {
     return JSON.parse(raw.toString());
   }
 
-  function convertToValidFilename(text: string): string {
-    return text.replace(/[\/|\\:*?"<>]/g, ' ');
+  function nameToTitle(name: string): string {
+    const connectors = [
+      'a',
+      'an',
+      'the',
+      'of',
+      'for',
+      'and',
+      'but',
+      'or',
+      'nor',
+      'on',
+      'at',
+      'to',
+      'by',
+      'with',
+      'as',
+      'in'
+    ];
+
+    const words = name
+      .replace(/[\/|\\:*?"<>]/g, ' ')
+      .toLowerCase()
+      .split(' ');
+
+    words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
+    for (let i = 1; i < words.length; i++) {
+      if (!connectors.includes(words[i])) {
+        words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+      }
+    }
+
+    return words.join(' ');
   }
 
-  function getVaultPath(name: string, type: EntityType): string {
-    const title = convertToValidFilename(name);
-    return path.join(paths[type], title);
-  }
-
-  function getFilePath(name: string, type: EntityType): string {
-    const title = convertToValidFilename(name);
-    return path.resolve(process.cwd(), output, paths[type], `${title}.md`);
+  function convertToSnakeCase(text: string): string {
+    return text.replace(/\s+/g, '_').toLowerCase();
   }
 
   function getDirPath(type: EntityType): string {
     return path.resolve(process.cwd(), output, paths[type]);
   }
 
-  function formatLink(name: string, type: EntityType): string {
-    const vaultPath = getVaultPath(name, type);
-    return linkStyle === 'wikilink' ? `[[${vaultPath}]]` : `[${name}](/${vaultPath}.md)`;
+  function getFilePath(name: string, type: EntityType): string {
+    const title = nameToTitle(name);
+    return path.resolve(process.cwd(), output, paths[type], `${title}.md`);
   }
 
-  function getAttrName(attr: ShortAttribute): string {
-    if (attr === 'str') {
-      return 'Strength';
+  function getVaultLink(name: string, type: EntityType, alias?: string, section?: string): string {
+    let title = nameToTitle(name);
+    let vaultPath = path.join(paths[type], title);
+
+    if (section) {
+      vaultPath += linkStyle === 'wikilink' ? `#${nameToTitle(section)}` : `#${convertToSnakeCase(section)}`;
     }
 
-    if (attr === 'con') {
-      return 'Constitution';
-    }
+    const aliases = alias || section || name;
+    return linkStyle === 'wikilink' ? `[[${vaultPath}|${aliases}]]` : `[${aliases}](/${vaultPath}.md)`;
+  }
 
-    if (attr === 'dex') {
-      return 'Dexterity';
-    }
+  function getAttrName(attr: AttributeCode): string {
+    return ATTRIBUTES.find(a => a.code === attr)!.name;
+  }
 
-    if (attr === 'int') {
-      return 'Intelligence';
-    }
+  function getSkillName(skill: SkillCode): string {
+    return SKILLS.find(s => s.code === skill)!.name;
+  }
 
-    if (attr === 'cha') {
-      return 'Charisma';
-    }
-
-    if (attr === 'wis') {
-      return 'Wisdom';
-    }
-
-    return attr;
+  function getSourceName(source: SourceCode): string {
+    return SOURCES.find(s => s.code === source)!.name;
   }
 
   function numberToRoman(num: number, upper?: boolean): string {
@@ -154,17 +178,18 @@ export const helpers = (config: Config, output: string) => {
     findFluff,
     filterBySources,
     readJsonFile,
-    getVaultPath,
     getFilePath,
-    formatLink,
+    getVaultLink,
     getDirPath,
     numberToRoman,
     sortEntries,
-    convertToValidFilename,
+    nameToTitle,
     getAttrName,
+    getSourceName,
+    getSkillName,
 
     handlebars: {
-      formatLink
+      link: getVaultLink
     }
   };
 };

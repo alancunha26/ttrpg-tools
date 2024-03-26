@@ -1,4 +1,4 @@
-export const sources = [
+export const SOURCES = [
   { code: 'AAG', name: "Astral Adventurer's Guide" },
   { code: 'AATM', name: 'Adventure Atlas: The Mortuary' },
   { code: 'AI', name: 'Acquisitions Incorporated' },
