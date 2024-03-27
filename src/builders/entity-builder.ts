@@ -8,6 +8,7 @@ import { SOURCES } from '../models/sources';
 
 export const EntityBuilder = (context: Context) => {
   const { type, config, helpers: _ } = context;
+  const markdownBuilder = MarkdownBuilder(context);
 
   if (!type) {
     throw new Error('Type of build not defined');
@@ -17,7 +18,6 @@ export const EntityBuilder = (context: Context) => {
     throw new Error('EntityType.sources is not implemented');
   }
 
-  const markdownBuilder = MarkdownBuilder(context);
   return async (entity: Entity) => {
     const entityName = entity.name.replace('Variant ', '');
     const filepath = _.getFilePath(entityName, type);

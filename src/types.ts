@@ -614,6 +614,10 @@ export interface FluffEntity {
   _copy?: CopyEntity;
 }
 
+/**
+ * BACKGROUNDS
+ */
+
 export interface BackgroundEntity extends Entity {
   prerequisite?: Prerequisite[];
   skillProficiencies?: SkillProficiency[];
@@ -628,4 +632,29 @@ export interface BackgroundEntity extends Entity {
     additionalSpells?: boolean;
     feats: boolean;
   };
+}
+
+/**
+ * CLASSES
+ */
+export interface ClassEntity extends Entity {}
+
+export interface ClassFeatureEntity extends Entity {}
+
+/**
+ * SUBCLASSES
+ */
+
+export interface SubclassEntity extends Entity {}
+
+export interface SubclassFeatureEntity extends Entity {}
+
+/**
+ * CLASS FILE
+ */
+export interface ClassFile {
+  class: ClassEntity[];
+  subclass: SubclassEntity[];
+  classFeature: ClassFeatureEntity[];
+  subclassFeature: SubclassFeatureEntity[];
 }

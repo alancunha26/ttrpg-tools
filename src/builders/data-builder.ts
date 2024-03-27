@@ -1,10 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { ArrEntry, BackgroundEntity, Config, CopyEntity, Entity, Entry, FluffEntity } from '../types';
+import { ArrEntry, BackgroundEntity, ClassFile, Config, CopyEntity, Entity, Entry, FluffEntity } from '../types';
 
 export const DataBuilder = (dataPath: string, config: Config) => {
   const { sources } = config;
-  console.log('DataBuilder', sources, dataPath);
 
   /**
    * ENTRIES MERGE
@@ -118,8 +117,9 @@ export const DataBuilder = (dataPath: string, config: Config) => {
    * UTILS
    */
 
-  function readDataFile(path: string) {
-    const raw = fs.readFileSync(path);
+  function readDataFile(file: string) {
+    const data = path.resolve(dataPath, file);
+    const raw = fs.readFileSync(data);
     return JSON.parse(raw.toString());
   }
 
@@ -131,23 +131,77 @@ export const DataBuilder = (dataPath: string, config: Config) => {
    * LOADERS
    */
 
-  function loadRenderDemo() {
-    const demoPath = path.resolve(dataPath, 'renderdemo.json');
-    return readDataFile(demoPath).data as Entity[];
-  }
-
   function loadBackgrounds(): BackgroundEntity[] {
-    const bgPath = path.resolve(dataPath, 'backgrounds.json');
-    const fluffPath = path.resolve(dataPath, 'fluff-backgrounds.json');
+    const file = readDataFile('backgrounds.json');
+    const fluffFile = readDataFile('fluff-backgrounds.json');
 
-    const entities = (readDataFile(bgPath).background as BackgroundEntity[]).filter(bySources);
-    const fluffs = (readDataFile(fluffPath).backgroundFluff as FluffEntity[]).filter(bySources);
+    const entities = (file.background as BackgroundEntity[]).filter(bySources);
+    const fluffs = (fluffFile.backgroundFluff as FluffEntity[]).filter(bySources);
 
     return mergeEntityEntries<BackgroundEntity>(entities, fluffs);
   }
 
+  function loadClasses(): ClassFile {
+    const artificer = readDataFile('class/class-artificer.json') as ClassFile;
+    const barbarian = readDataFile('class/class-barbarian.json') as ClassFile;
+    const bard = readDataFile('class/class-bard.json') as ClassFile;
+    const cleric = readDataFile('class/class-cleric.json') as ClassFile;
+    const druid = readDataFile('class/class-druid.json') as ClassFile;
+    const fighter = readDataFile('class/class-fighter.json') as ClassFile;
+    const monk = readDataFile('class/class-monk.json') as ClassFile;
+    const mystic = readDataFile('class/class-mystic.json') as ClassFile;
+    const paladin = readDataFile('class/class-paladin.json') as ClassFile;
+    const ranger = readDataFile('class/class-ranger.json') as ClassFile;
+    const rogue = readDataFile('class/class-rogue.json') as ClassFile;
+    const sorcerer = readDataFile('class/class-sorcerer.json') as ClassFile;
+    const warlock = readDataFile('class/class-warlock.json') as ClassFile;
+    const wizard = readDataFile('class/class-wizard.json') as ClassFile;
+
+    const classes = [
+      artificer,
+      barbarian,
+      bard,
+      cleric,
+      druid,
+      fighter,
+      monk,
+      mystic,
+      paladin,
+      ranger,
+      rogue,
+      sorcerer,
+      warlock,
+      wizard
+    ];
+
+    const data: ClassFile = {
+      class: [],
+      subclass: [],
+      classFeature: [],
+      subclassFeature: []
+    };
+
+    return classes.reduce(
+      (prev, curr) => ({
+        class: [...prev.class, ...curr.class.filter(bySources)],
+        subclass: [...prev.subclass, ...curr.subclass.filter(bySources)],
+        classFeature: [...prev.classFeature, ...curr.classFeature.filter(bySources)],
+        subclassFeature: [...prev.subclassFeature, ...curr.subclassFeature.filter(bySources)]
+      }),
+      data
+    );
+  }
+
+  const renderdemo = readDataFile('renderdemo.json').data as Entity[];
+  const backgrounds = loadBackgrounds();
+  const classes = loadClasses();
+
   return {
-    renderdemo: loadRenderDemo(),
-    backgrounds: loadBackgrounds()
+    renderdemo,
+    backgrounds,
+    classes: classes.class,
+    subclasses: classes.subclass,
+    classFeatures: classes.classFeature,
+    subclassFeatures: classes.subclassFeature
   };
 };
