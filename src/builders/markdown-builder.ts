@@ -3,14 +3,11 @@ import {
   AbilityAttackModEntry,
   AbilityDcEntry,
   AbilityGenericEntry,
-  ArrEntry,
   BonusEntry,
   Context,
-  CopyEntity,
   DiceEntry,
   Entity,
   Entry,
-  FluffEntity,
   ImageEntry,
   InlineBlockEntry,
   InlineEntry,
@@ -52,7 +49,6 @@ interface State {
   index: number;
   listLevel: number;
   headingLevel: number;
-  fluff?: FluffEntity;
   entity?: Entity;
   nowrap?: boolean;
   notitle?: boolean;
@@ -65,8 +61,7 @@ const defaultState: State = {
 };
 
 export const MarkdownBuilder = (context: Context) => {
-  const { options, entities, fluffs } = context;
-  const { config, helpers: h } = options;
+  const { config, helpers: h } = context;
   const { imageWidth, identation, alwaysIncreaseHeadingLevel, useHtmlTags, useDiceRoller: useDiceRoler } = config;
   const tabs = Array(identation).fill(' ').join('');
 
@@ -523,6 +518,14 @@ export const MarkdownBuilder = (context: Context) => {
     });
   }
 
+  function subclassFeatureTagToMarkdown(text: string): string {
+    // EXAMPLE: {@subclassFeature Eldritch Cannon|Artificer|TCE|Artillerist|TCE|3}
+    return text.replace(/{\@subclassFeature\s(.*?)}/g, (_: string, content: string) => {
+      const [feature, classe, source, subclass, subclassSource, level, alias] = content.trim().split('|');
+      return h.getVaultLink(subclass, 'subclasses', alias, feature);
+    });
+  }
+
   // NOTE: Unsupported markdown elements like kbd and colors tags are
   // converted to html elements instead, you can disable this by
   // settings the `useHtmlTags = false` in the config file, this will
@@ -577,6 +580,7 @@ export const MarkdownBuilder = (context: Context) => {
     output = optFeatureTagToMarkdown(output);
     output = classTagToMarkdown(output);
     output = classFeatureTagToMarkdown(output);
+    output = subclassFeatureTagToMarkdown(output);
 
     return output;
   }
@@ -855,10 +859,9 @@ export const MarkdownBuilder = (context: Context) => {
   }
 
   function imageToMarkdown(image: ImageEntry, state: State): string {
-    const { entity, fluff } = state;
     const baseUrl = 'https://5e.tools/img';
     const url = new URL(`${baseUrl}/${image.href.path}`);
-    const title = image.title || entity?.name || fluff?.name;
+    const title = image.title || state.entity?.name;
     return `![${title}|${imageWidth}](${url.href})`;
   }
 
@@ -912,49 +915,6 @@ export const MarkdownBuilder = (context: Context) => {
     return `[${link.text}](${url})`;
   }
 
-  function mapCopyArrEntries(arr: ArrEntry, prev: Entry[]): Entry[] {
-    let entries = prev.slice();
-
-    if (arr.mode === 'prependArr') {
-      const prepend = Array.isArray(arr.items) ? arr.items : [arr.items];
-      entries.unshift(...prepend);
-    }
-
-    if (arr.mode === 'insertArr') {
-      const insert = Array.isArray(arr.items) ? arr.items : [arr.items];
-      entries = [...entries.slice(0, arr.index), ...insert, ...entries.slice(arr.index)];
-    }
-
-    if (arr.mode === 'replaceArr') {
-      const replace = Array.isArray(arr.items) ? arr.items : [arr.items];
-      let replaceIndex = 0;
-
-      if (typeof arr.replace === 'string') {
-        const replaceName = arr.replace;
-        const index = entries.findIndex(o => {
-          if (typeof o === 'string') return o === replaceName;
-          if (o.type === 'image') return o.title === replaceName;
-          if ('name' in o && o.name) return o.name === replaceName;
-          return false;
-        });
-
-        replaceIndex = Math.max(0, index);
-      } else {
-        replaceIndex = arr.replace.index;
-      }
-
-      entries = entries.reduce<Entry[]>((prev, curr, index) => {
-        if (index === replaceIndex) {
-          return index === replaceIndex ? [...prev, ...replace] : [...prev, curr];
-        } else {
-          return [...prev, curr];
-        }
-      }, []);
-    }
-
-    return entries;
-  }
-
   function optFeatureToMarkdown(opt: OptFeatureEntry, state: State): string {
     let output = '';
     if (opt.prerequisite) output += `***${opt.prerequisite}***\n\n`;
@@ -962,64 +922,9 @@ export const MarkdownBuilder = (context: Context) => {
     return output;
   }
 
-  function copyEntries(copy: CopyEntity, fluff?: boolean): Entry[] {
-    const findEntity = (e: Entity | FluffEntity) => e.name === copy.name;
-    const original = fluff ? fluffs.find(findEntity) : entities.find(findEntity);
-
-    if (!original || !original.entries) {
-      return [];
-    }
-
-    let entries: Entry[] = original.entries || [];
-
-    if (!copy._mod || !copy._mod.entries) {
-      return entries;
-    }
-
-    if (Array.isArray(copy._mod.entries)) {
-      copy._mod.entries.forEach(arrEntry => (entries = mapCopyArrEntries(arrEntry, entries)));
-    } else {
-      entries = mapCopyArrEntries(copy._mod.entries, entries);
-    }
-
-    return entries;
-  }
-
-  function entityToMarkdown(entity: Entity, fluff?: FluffEntity): string {
-    const state: State = { ...defaultState, entity, fluff: fluff };
-    let fluffEntries: Entry[] = [];
-    let entityEntries: Entry[] = [];
-
-    if (fluff?.entries) {
-      fluffEntries.push(...fluff.entries);
-    }
-
-    if (fluff?._copy) {
-      fluffEntries.push(...copyEntries(fluff._copy, true));
-    }
-
-    if (entity.entries) {
-      entityEntries.push(...entity.entries);
-    }
-
-    if (entity._copy) {
-      entityEntries.push(...copyEntries(entity._copy));
-    }
-
-    let entries: Entry[] = [];
-
-    // Add the fluff images to the start of the body
-    if (fluff?.images) {
-      if (Array.isArray(fluff.images)) {
-        entries.push(...fluff.images);
-      } else {
-        entries.push(fluff.images.item);
-      }
-    }
-
-    // Add the mechanics fluffs entries first and then the mechanics
-    entries.push(...fluffEntries, ...entityEntries);
-    return entriesToMarkdown(entries, state);
+  function entityToMarkdown(entity: Entity): string {
+    const state: State = { ...defaultState, entity };
+    return entriesToMarkdown(entity.entries || [], state);
   }
 
   return {

@@ -1,21 +1,13 @@
-import { resolve } from 'path';
-import { Entity, Options } from '../types';
+import { Context } from '../types';
 import { EntityBuilder } from '../builders/entity-builder';
 
-export async function demoConverter(dataPath: string, options: Options) {
-  const { helpers: _ } = options;
-
-  const path = resolve(dataPath, 'renderdemo.json');
-  const entities = _.readJsonFile(path).data as Entity[];
-
+export async function demoConverter(context: Context) {
   const buildEntity = EntityBuilder({
-    options,
-    entities,
-    fluffs: [],
-    type: 'renderdemo'
+    type: 'renderdemo',
+    ...context
   });
 
-  for (const demo of entities) {
+  for (const demo of context.data.renderdemo) {
     const entity = await buildEntity(demo);
     // const allTypes = _.findAllEntryTypes(demo.entries);
     // console.log('allTypes', allTypes);

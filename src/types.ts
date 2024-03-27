@@ -1,3 +1,4 @@
+import { DataBuilder } from './builders/data-builder';
 import { helpers } from './helpers';
 import { ATTRIBUTES } from './models/attributes';
 import { SKILLS } from './models/skills';
@@ -53,17 +54,12 @@ export interface Config {
   alwaysIncreaseHeadingLevel: boolean;
 }
 
-export interface Options {
-  config: Config;
-  output: string;
-  helpers: ReturnType<typeof helpers>;
-}
-
 export interface Context {
-  options: Options;
-  entities: Entity[];
-  fluffs: FluffEntity[];
-  type: EntityType;
+  output: string;
+  data: ReturnType<typeof DataBuilder>;
+  helpers: ReturnType<typeof helpers>;
+  config: Config;
+  type?: EntityType;
 }
 
 /**

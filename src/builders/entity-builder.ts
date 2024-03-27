@@ -7,8 +7,11 @@ import { MarkdownBuilder } from './markdown-builder';
 import { SOURCES } from '../models/sources';
 
 export const EntityBuilder = (context: Context) => {
-  const { options, fluffs, type } = context;
-  const { config, helpers: _ } = options;
+  const { type, config, helpers: _ } = context;
+
+  if (!type) {
+    throw new Error('Type of build not defined');
+  }
 
   if (type === 'sources') {
     throw new Error('EntityType.sources is not implemented');
@@ -16,7 +19,6 @@ export const EntityBuilder = (context: Context) => {
 
   const markdownBuilder = MarkdownBuilder(context);
   return async (entity: Entity) => {
-    const fluff = _.findFluff(entity, fluffs);
     const entityName = entity.name.replace('Variant ', '');
     const filepath = _.getFilePath(entityName, type);
     const dirpath = _.getDirPath(type);
@@ -31,7 +33,7 @@ export const EntityBuilder = (context: Context) => {
       source: SOURCES.find(source => source.code === entity.source)!,
       created: moment().format('YYYY-DD-MM'),
       srd: entity.srd ? 'true' : 'false',
-      body: markdownBuilder.entityToMarkdown(entity, fluff)
+      body: markdownBuilder.entityToMarkdown(entity)
     };
 
     return {

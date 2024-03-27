@@ -1,10 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { Command } from 'commander';
-import { Config, Options } from './types';
+import { Config, Context } from './types';
 import { backgroundConverter } from './converters/background-converter';
-import { helpers as buildHelpers } from './helpers';
+import { helpers as HelpersBuilder } from './helpers';
 import { demoConverter } from './converters/demo-converter';
+import { DataBuilder } from './builders/data-builder';
 
 function errorColor(str: string) {
   return `\x1b[31m${str}\x1b[0m`;
@@ -42,10 +43,12 @@ function errorColor(str: string) {
 
   const rawConfig = fs.readFileSync(opts.config);
   const config = JSON.parse(rawConfig.toString()) as Config;
-  const helpers = buildHelpers(config, opts.output);
+
+  const data = DataBuilder(opts.data, config);
+  const helpers = HelpersBuilder(config, opts.output);
 
   // Converters
-  const options: Options = { output: opts.output, helpers, config };
-  await backgroundConverter(opts.data, options);
-  await demoConverter(opts.data, options);
+  const context: Context = { data, helpers, config, output: opts.output };
+  await backgroundConverter(context);
+  await demoConverter(context);
 })();

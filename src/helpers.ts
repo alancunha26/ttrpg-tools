@@ -41,19 +41,6 @@ export const helpers = (config: Config, output: string) => {
     return types;
   }
 
-  function findFluff(entity: Entity, fluffEntities: FluffEntity[]) {
-    return fluffEntities.find(fluff => entity.name === fluff.name && entity.source === fluff.source);
-  }
-
-  function filterBySources(entities: Entity[]) {
-    return entities.filter(entity => sources.includes(entity.source));
-  }
-
-  function readJsonFile(path: string) {
-    const raw = fs.readFileSync(path);
-    return JSON.parse(raw.toString());
-  }
-
   function nameToTitle(name: string): string {
     const connectors = [
       'a',
@@ -175,9 +162,6 @@ export const helpers = (config: Config, output: string) => {
 
   return {
     findAllEntryTypes,
-    findFluff,
-    filterBySources,
-    readJsonFile,
     getFilePath,
     getVaultLink,
     getDirPath,
