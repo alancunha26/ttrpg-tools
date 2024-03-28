@@ -24,3 +24,7 @@ export const ATTRIBUTES = [
     name: 'Wisdom'
   }
 ] as const;
+
+export type Attribute = (typeof ATTRIBUTES)[number];
+export type AttributeCode = Attribute['code'];
+export type AttributeName = Attribute['name'];

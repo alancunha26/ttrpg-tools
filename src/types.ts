@@ -1,51 +1,18 @@
 import { DataBuilder } from './builders/data-builder';
+import { SourceCode } from './models/sources';
 import { helpers } from './helpers';
-import { ATTRIBUTES } from './models/attributes';
-import { SKILLS } from './models/skills';
-import { SOURCES } from './models/sources';
+import { EntityType } from './models/entity';
+import { ArrEntry } from './models/entry';
 
-/**
- * CONFIG
- */
-
-export interface EntityPaths {
-  // Content
-  sources: string;
-  monsters: string;
-  classes: string;
-  subclasses: string;
-  races: string;
-  subraces: string;
-  variants: string;
-  equipment: string;
-  items: string;
-  spells: string;
-  backgrounds: string;
-  transports: string;
-  rewards: string;
-  feats: string;
-  objects: string;
-  traps: string;
-  psionics: string;
-  renderdemo: string;
-  'optional-features': string;
-
-  // Rules
-  actions: string;
-  diseases: string;
-  conditions: string;
-  senses: string;
-  skills: string;
-  'variant-rules': string;
-}
-
-export type EntityType = keyof EntityPaths;
+export type Paths = {
+  [key in EntityType]: string;
+};
 
 export interface Config {
   sourcesPath: string;
   linkStyle: 'wikilink' | 'markdown';
-  templates: EntityPaths;
-  paths: EntityPaths;
+  templates: Paths;
+  paths: Paths;
   imageWidth: number;
   sources: SourceCode[];
   identation: number;
@@ -62,599 +29,114 @@ export interface Context {
   type?: EntityType;
 }
 
-/**
- * ATTRIBUTES
- */
-
-export type Attribute = (typeof ATTRIBUTES)[number];
-export type AttributeCode = Attribute['code'];
-export type AttributeName = Attribute['name'];
-
-/**
- * SKILLS
- */
-
-export type Skill = (typeof SKILLS)[number];
-export type SkillCode = Skill['code'];
-export type SkillName = Skill['name'];
-
-/**
- * PREREQUISITE
- */
-
-export interface LevelPrerequisite {
-  level: number;
-  class: ClassPrerequisite;
-}
-
-export interface ClassPrerequisite {
-  name: string;
-  visible: boolean;
-}
-
-export interface Prerequisite {
-  campaign?: string[];
-  level?: LevelPrerequisite;
-}
-
-/**
- * SKILLS PROFICIENCIES
- */
-
-export interface ChooseSkillProficiency {
-  from: string[];
-  count?: number;
-  amount?: number;
-}
-
-export interface SkillProficiency {
-  nature?: boolean;
-  survival?: boolean;
-  performance?: boolean;
-  'sleight of hand'?: boolean;
-  acrobatics?: boolean;
-  athletics?: boolean;
-  history?: boolean;
-  persuasion?: boolean;
-  deception?: boolean;
-  stealth?: boolean;
-  religion?: boolean;
-  insight?: boolean;
-  investigation?: boolean;
-  'animal handling'?: boolean;
-  perception?: boolean;
-  intimidation?: boolean;
-  arcana?: boolean;
-  medicine?: boolean;
-  choose?: ChooseSkillProficiency;
+export type SkillProficiency = { [key: string]: boolean } & {
+  choose?: { from: string[]; count: number };
   any?: number;
-}
+};
 
-/**
- * TOOLS PROFICIENCIES
- */
-
-export interface ChooseToolProficiency {
-  from: string[];
-  count?: number;
-}
+export type WeaponProficiency = { [key: string]: boolean } & {
+  choose?: { from?: string[]; fromFilter?: string; count: number };
+};
 
 export type ToolProficiency = { [key: string]: boolean } & {
-  choose?: ChooseToolProficiency;
-  anyArtisanTool?: number;
+  choose?: { from: string[]; count: number };
+  anyMusicalInstrument?: number;
+  anyArtisansTool?: number;
+  any?: number;
 };
-
-/**
- * SKILL TOOL LANGUAGE PROFICIENCIES
- */
-
-export interface ChooseSkillToolLanguageProficiency {
-  from: string[];
-  count?: number;
-}
-
-export type SkillToolLanguageProficiency = { [key: string]: boolean } & {
-  choose?: ChooseSkillToolLanguageProficiency;
-  anySkill?: number;
-  anyLanguage?: number;
-  anyTool?: number;
-};
-
-/**
- * LANGUAGES PROFICIENCIES
- */
-
-export interface ChooseLanguage {
-  from: string[];
-  count?: number;
-}
 
 export type LanguageProficiency = { [key: string]: boolean } & {
-  any?: number;
+  choose?: { from: string[]; count: number };
   anyStandard?: number;
-};
-
-/**
- * WEAPON PROFICIENCIES
- */
-
-export interface WeaponProficiency {
-  [key: string]: boolean;
-}
-
-/**
- * STARTING EQUIPMENT
- */
-
-export interface StartingEquipment {
-  _?: any[];
-  a?: any[];
-  b?: any[];
-  c?: any[];
-  d?: any[];
-}
-
-/**
- * FEATS LEARN
- */
-
-export type FeatsLearn = { [key: string]: boolean } & {
+  anyExotic?: number;
   any?: number;
 };
 
-/**
- * SOURCES
- */
-
-export type Source = (typeof SOURCES)[number];
-export type SourceCode = Source['code'];
-export type SourceName = Source['name'];
-
-export interface AdditionalSource {
-  source: SourceCode;
-  page: number;
-}
-
-/**
- * ENTRIES
- */
-
-// allTypes [
-//   'string',           'quote',
-//   'list',             'entries',
-//   'inline',           'inlineBlock',
-//   'options',          'table',
-//   'bonus',            'bonusSpeed',
-//   'dice',             'abilityDc',
-//   'abilityAttackMod', 'abilityGeneric',
-//   'link',             'optfeature',
-//   'inset',            'insetReadaloud',
-//   'variant',          'image',
-//   'item',             'itemSub',
-//   'variantSub',       'statblockInline',
-//   'statblock'
-// ]
-
-export type Entry =
-  | string
-  | EntriesEntry
-  | TableEntry
-  | QuoteEntry
-  | ImageEntry
-  | InsetEntry
-  | ListEntry
-  | ItemEntry
-  | InlineEntry
-  | InlineBlockEntry
-  | LinkEntry
-  | OptionsEntry
-  | BonusEntry
-  | SectionEntry
-  | DiceEntry
-  | AbilityDcEntry
-  | AbilityAttackModEntry
-  | AbilityGenericEntry
-  | OptFeatureEntry
-  | VariantEntry
-  | StatblockInlineEntry
-  | StatblockEntry;
-
-/**
- * TODO: implement statblock entries
- * STATBLOCK ENTRY
- */
-
-export interface StatblockInlineEntry {
-  type: 'statblockInline';
-}
-
-export interface StatblockEntry {
-  type: 'statblock';
-}
-
-/*
- * VARIANT ENTRY
- */
-
-export interface VariantEntry {
-  type: 'variant' | 'variantSub';
-  entries: Entry[];
-  name?: string;
-}
-
-/**
- * OPTIONAL FEATURE ENTRY
- */
-
-export interface OptFeatureEntry {
-  type: 'optfeature';
-  entries: Entry[];
-  name?: string;
-  prerequisite?: string;
-}
-
-/**
- * ABILITY DC ENTRY
- */
-
-export interface AbilityDcEntry {
-  type: 'abilityDc';
-  attributes: AttributeCode[];
-  name: string;
-}
-
-/**
- * ABILITY ATTACK MOD ENTRY
- */
-
-export interface AbilityAttackModEntry {
-  type: 'abilityAttackMod';
-  attributes: AttributeCode[];
-  name: string;
-}
-
-/**
- * ABILITY GENERIC MOD ENTRY
- */
-
-export interface AbilityGenericEntry {
-  type: 'abilityGeneric';
-  attributes?: AttributeCode[];
-  name?: string;
-  text: string;
-}
-
-/**
- * OPTIONS ENTRY
- */
-
-export interface OptionsEntry {
-  type: 'options';
-  entries: Entry[];
-}
-
-/**
- * BONUS ENTRY
- */
-export interface BonusEntry {
-  type: 'bonus' | 'bonusSpeed';
-  value?: number;
-}
-
-/**
- * INLINE ENTRY
- */
-
-export interface InlineEntry {
-  type: 'inline';
-  entries: Entry[];
-}
-
-export interface InlineBlockEntry {
-  type: 'inlineBlock';
-  entries: Entry[];
-}
-
-/**
- * LINK ENTRY
- */
-
-export interface InternalLink {
-  type: 'link';
-  text: string;
-  href: { type: 'internal'; path: string };
-}
-
-export interface ExternalLink {
-  type: 'link';
-  text: string;
-  href: { type: 'external'; url: string };
-}
-
-export type LinkEntry = InternalLink | ExternalLink;
-
-/**
- * LIST ENTRIES
- */
-
-export interface BulletListEntry {
-  type: 'list';
-  items: Entry[];
-  name?: string;
-}
-
-export interface NoBulletListEntry {
-  type: 'list';
-  style: 'list-no-bullets';
-  items: Entry[];
-  name?: string;
-}
-
-export interface HangListEntry {
-  type: 'list';
-  style: 'list-hang';
-  items: Entry[];
-  name?: string;
-}
-
-export interface HangNoTitleListEntry {
-  type: 'list';
-  style: 'list-hang-notitle';
-  items: Entry[];
-  name?: string;
-}
-
-export interface DecimalListEntry {
-  type: 'list';
-  style: 'list-decimal';
-  items: Entry[];
-  start?: number;
-  name?: string;
-}
-
-export interface RomanListEntry {
-  type: 'list';
-  style: 'list-upper-roman' | 'list-lower-roman';
-  items: Entry[];
-  start?: number;
-  name?: string;
-}
-
-export type ListEntry =
-  | BulletListEntry
-  | NoBulletListEntry
-  | HangListEntry
-  | HangNoTitleListEntry
-  | DecimalListEntry
-  | RomanListEntry;
-
-/**
- * DICE ENTRY
- */
-
-export interface DiceToRoll {
-  number: number;
-  faces: number;
-  modifier?: number;
-  hideModifier?: boolean;
-}
-
-export interface DiceEntry {
-  type: 'dice';
-  rollable: boolean;
-  toRoll: DiceToRoll[];
-}
-
-/**
- * ITEM ENTRIES
- */
-
-export interface BaseItemEntry {
-  type: 'item';
-  name?: string;
-  entry?: Entry;
-  entries?: Entry[];
-}
-
-export interface SubItemEntry {
-  type: 'itemSub';
-  name?: string;
-  entry: Entry;
-}
-
-export interface SpellItemEntry {
-  type: 'itemSpell';
-  name?: string;
-  entry: Entry;
-}
-
-export type ItemEntry = BaseItemEntry | SubItemEntry | SpellItemEntry;
-
-/**
- * TABLE ENTRY
- */
-
-export interface TableRollEntry {
-  type: 'cell';
-  roll: {
-    exact?: number;
-    min?: number;
-    max?: number;
-    pad?: boolean;
+export type SkillToolLanguageProficiency = { anyTool?: boolean; anyLanguage?: boolean; anySkill?: boolean } & {
+  choose?: {
+    from: Array<'anyTool' | 'anyLanguage' | 'anySkill'>;
+    count?: number;
   };
-}
+};
 
-export type TableCell = Entry | TableRollEntry;
+export type StartingEquipment = {
+  [key: string]:
+    | string
+    | {
+        item?: string;
+        displayName?: string;
+        special?: string;
+        quantity?: number;
+        containsValue?: number;
+        equipmentType?: string;
+        worthValue?: number;
+        value?: number;
+      };
+};
 
-export interface TableIdentFirstRow {
-  type: 'row';
-  style: 'row-ident-first';
-  row: TableCell | TableCell[];
-}
+export type Speed =
+  | number
+  | {
+      walk: number;
+      climb?: number | boolean;
+      fly?: number | boolean;
+      swim?: number | boolean;
+      burrow?: number | boolean;
+    };
 
-export type TableRow = TableCell[] | TableIdentFirstRow;
+export type Size = 'T' | 'S' | 'M' | 'L' | 'H' | 'G' | 'V';
 
-export interface TableEntry {
-  type: 'table';
-  caption?: string;
-  colLabelGroups?: { colLabels?: string[] }[];
-  colLabels?: string[];
-  rows: TableRow[];
-}
-
-/**
- * SECTION ENTRY
- */
-
-export interface SectionEntry {
-  type: 'section';
-  name?: string;
-  entries: Entry[];
-}
-
-/**
- * IMAGE ENTRY
- */
-
-export interface ImageEntry {
-  type: 'image';
-  name?: string;
-  title?: string;
-  credit?: string;
-  href: {
-    type: 'internal' | 'external';
-    path: string;
+export interface Prerequisite {
+  ability?: { [key: string]: string }[];
+  pact?: 'Chain' | 'Tome' | 'Blade' | 'Talisman';
+  patron?: string;
+  spell?: string[];
+  feature?: string[];
+  feat?: string[];
+  spellcasting?: boolean;
+  spellcastingFeature?: boolean;
+  psionics?: boolean;
+  other?: string;
+  otherSummary?: {
+    entry: string;
+    entrySummary: string;
   };
+  proficiency: {
+    weapon?: 'simpe' | 'martial';
+    armor?: 'light' | 'medium' | 'heavy';
+  };
+  item?: string[];
+  level?:
+    | number
+    | {
+        level: number;
+        class: { name: string; source?: SourceCode; visible: boolean };
+        subclass: { name: string; source?: SourceCode; visible: boolean };
+      };
+  race?: {
+    name: string;
+    subrace?: string;
+    displayEntry?: string;
+  }[];
 }
 
-/**
- * ENTRIES ENTRY
- */
+export type Ability = { [key: string]: boolean } & {
+  choose?: {
+    from: string[];
+    count?: number;
+    amount?: number;
+    weights?: number[];
+  };
+};
 
-export interface EntriesEntry {
-  type: 'entries';
-  entries: Entry[];
-  name?: string;
-}
-
-/**
- * INSET ENTRY
- */
-
-export interface InsetEntry {
-  type: 'inset' | 'insetReadaloud';
-  entries: Entry[];
-  name?: string;
-}
-
-/**
- * QUOTE ENTRY
- */
-
-export interface QuoteEntry {
-  type: 'quote';
-  entries: string[];
-  by: string;
-  from?: string;
-  name?: string;
-}
-
-/**
- * ARR ENTRIES
- */
-
-export interface PrependArrEntry {
-  mode: 'prependArr';
-  items: Entry | Entry[];
-}
-
-export interface InsertArrEntry {
-  mode: 'insertArr';
-  index: number;
-  items: Entry | Entry[];
-}
-
-export interface ReplaceArrEntry {
-  mode: 'replaceArr';
-  replace: string | { index: number };
-  items: Entry | Entry[];
-}
-
-export type ArrEntry = PrependArrEntry | InsertArrEntry | ReplaceArrEntry;
-
-/**
- * ENTITIES
- */
-
-export interface CopyEntity {
+export interface Copy {
   name: string;
   source: string;
   _mod?: { entries?: ArrEntry | ArrEntry[] };
 }
 
-export interface Entity {
-  name: string;
-  source: SourceCode;
-  page: string;
-  additionalSources?: AdditionalSource[];
-  otherSources?: AdditionalSource[];
-  srd?: boolean;
-  basicRules?: boolean;
-  entries?: Entry[];
-  _copy?: CopyEntity;
-  hasFluff?: boolean;
-  hasFluffImages?: boolean;
-}
-
-export interface FluffEntity {
-  name: string;
-  source: SourceCode;
-  entries?: Entry[];
-  images?: { item: ImageEntry } | ImageEntry[];
-  _copy?: CopyEntity;
-}
-
-/**
- * BACKGROUNDS
- */
-
-export interface BackgroundEntity extends Entity {
-  prerequisite?: Prerequisite[];
-  skillProficiencies?: SkillProficiency[];
-  languageProficiencies?: LanguageProficiency[];
-  toolProficiencies?: ToolProficiency[];
-  startingEquipment?: StartingEquipment[];
-  weaponProficiencies?: WeaponProficiency[];
-  skillToolLanguageProficiencies?: SkillToolLanguageProficiency[];
-  feats?: FeatsLearn[];
-  additionalSpells?: any;
-  fromFeature?: {
-    additionalSpells?: boolean;
-    feats: boolean;
-  };
-}
-
-/**
- * CLASSES
- */
-export interface ClassEntity extends Entity {}
-
-export interface ClassFeatureEntity extends Entity {}
-
-/**
- * SUBCLASSES
- */
-
-export interface SubclassEntity extends Entity {}
-
-export interface SubclassFeatureEntity extends Entity {}
-
-/**
- * CLASS FILE
- */
-export interface ClassFile {
-  class: ClassEntity[];
-  subclass: SubclassEntity[];
-  classFeature: ClassFeatureEntity[];
-  subclassFeature: SubclassFeatureEntity[];
+export interface AbbreviationCopy {
+  source: string;
+  abbreviation: string;
+  _mod?: { entries?: ArrEntry | ArrEntry[] };
 }

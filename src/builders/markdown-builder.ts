@@ -4,9 +4,7 @@ import {
   AbilityDcEntry,
   AbilityGenericEntry,
   BonusEntry,
-  Context,
   DiceEntry,
-  Entity,
   Entry,
   ImageEntry,
   InlineBlockEntry,
@@ -21,7 +19,9 @@ import {
   TableCell,
   TableEntry,
   VariantEntry
-} from '../types';
+} from '../models/entry';
+import { Entity } from '../models/entity';
+import { Context } from '../types';
 
 function isItemType(value: any): value is ItemEntry {
   const itemType = ['item', 'itemSpell', 'itemSub'] as const;
@@ -137,6 +137,14 @@ export const MarkdownBuilder = (context: Context) => {
 
     if (entry.type === 'optfeature') {
       output += optFeatureToMarkdown(entry, nextState);
+    }
+
+    if (entry.type === 'refClassFeature') {
+      console.log('refClassFeature', entry);
+    }
+
+    if (entry.type === 'refSubclassFeature') {
+      console.log('refSubclassFeature', entry);
     }
 
     if (isItemType(entry)) {
@@ -499,8 +507,8 @@ export const MarkdownBuilder = (context: Context) => {
 
   function optFeatureTagToMarkdown(text: string): string {
     return text.replace(/{\@optfeature(.*?)}/g, (_: string, content: string) => {
-      const [race, source, alias] = content.trim().split('|');
-      return h.getVaultLink(race, 'optional-features', alias);
+      const [opt, source, alias] = content.trim().split('|');
+      return h.getVaultLink(opt, 'optional-features', alias);
     });
   }
 

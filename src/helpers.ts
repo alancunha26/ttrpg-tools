@@ -1,44 +1,109 @@
-import fs from 'fs';
 import path from 'path';
-import { Config, Entity, FluffEntity, EntityType, Entry, AttributeCode, SourceCode, SkillCode } from './types';
-import { ATTRIBUTES } from './models/attributes';
-import { SOURCES } from './models/sources';
-import { SKILLS } from './models/skills';
+import { ATTRIBUTES, AttributeCode } from './models/attribute';
+import { AbbreviationCopy, Config, Copy } from './types';
+import { EntityType } from './models/entity';
+import { ArrEntry, Entry } from './models/entry';
+
+function mapCopyArrEntries(arr: ArrEntry, prev: Entry[]): Entry[] {
+  let entries = prev.slice();
+
+  if (arr.mode === 'prependArr') {
+    const prepend = Array.isArray(arr.items) ? arr.items : [arr.items];
+    entries.unshift(...prepend);
+  }
+
+  if (arr.mode === 'insertArr') {
+    const insert = Array.isArray(arr.items) ? arr.items : [arr.items];
+    entries = [...entries.slice(0, arr.index), ...insert, ...entries.slice(arr.index)];
+  }
+
+  if (arr.mode === 'replaceArr') {
+    const replace = Array.isArray(arr.items) ? arr.items : [arr.items];
+    let replaceIndex = 0;
+
+    if (typeof arr.replace === 'string') {
+      const replaceName = arr.replace;
+      const index = entries.findIndex(o => {
+        if (typeof o === 'string') return o === replaceName;
+        if (o.type === 'image') return o.title === replaceName;
+        if ('name' in o && o.name) return o.name === replaceName;
+        return false;
+      });
+
+      replaceIndex = Math.max(0, index);
+    } else {
+      replaceIndex = arr.replace.index;
+    }
+
+    entries = entries.reduce<Entry[]>((prev, curr, index) => {
+      if (index === replaceIndex) {
+        return index === replaceIndex ? [...prev, ...replace] : [...prev, curr];
+      } else {
+        return [...prev, curr];
+      }
+    }, []);
+  }
+
+  return entries;
+}
+
+//
+// function mergeEntityEntries<T extends Entity>(entities: Entity[], fluffs?: FluffEntity[]): T[] {
+//   return entities.map(entity => {
+//     const fluff = fluffs?.find(fluff => entity.name === fluff.name && entity.source === fluff.source);
+//     let fluffEntries: Entry[] = [];
+//     let entityEntries: Entry[] = [];
+//
+//     if (fluff?.entries) {
+//       fluffEntries.push(...fluff.entries);
+//     }
+//
+//     if (fluff?._copy) {
+//       const original = fluffs?.find(f => f.name === fluff._copy?.name);
+//       if (original) fluffEntries.push(...copyEntries(fluff._copy, original));
+//     }
+//
+//     if (entity.entries) {
+//       entityEntries.push(...entity.entries);
+//     }
+//
+//     if (entity._copy) {
+//       const original = entities.find(e => e.name === entity._copy?.name);
+//       if (original) entityEntries.push(...copyEntries(entity._copy, original));
+//     }
+//
+//     let entries: Entry[] = [];
+//
+//     // Add the fluff images to the start of the body
+//     if (fluff?.images) {
+//       if (Array.isArray(fluff.images)) {
+//         entries.push(...fluff.images);
+//       } else {
+//         entries.push(fluff.images.item);
+//       }
+//     }
+//
+//     // Add the mechanics fluffs entries first and then the mechanics
+//     entries.push(...fluffEntries, ...entityEntries);
+//     return { ...entity, entries } as T;
+//   });
+// }
 
 export const helpers = (config: Config, output: string) => {
-  const { sources, linkStyle, paths } = config;
+  const { linkStyle, paths } = config;
 
-  function findAllEntryTypes(entries?: any[], types: string[] = []) {
-    let append: string[] = [];
+  function copyEntries(copy: Copy | AbbreviationCopy, entries: Entry[]): Entry[] {
+    if (!copy._mod || !copy._mod.entries) {
+      return entries;
+    }
 
-    entries?.forEach(entry => {
-      if (typeof entry === 'string') {
-        if (!types.includes('string')) types.push('string');
-        return;
-      }
+    if (Array.isArray(copy._mod.entries)) {
+      copy._mod.entries.forEach(arrEntry => (entries = mapCopyArrEntries(arrEntry, entries)));
+    } else {
+      entries = mapCopyArrEntries(copy._mod.entries, entries);
+    }
 
-      if (!types.includes(entry.type)) {
-        types.push(entry.type);
-      }
-
-      if (entry.entries) {
-        append.push(...findAllEntryTypes(entry.entries));
-        return;
-      }
-
-      if (entry.items) {
-        append.push(...findAllEntryTypes(entry.items));
-        return;
-      }
-    });
-
-    append.forEach(type => {
-      if (!types.includes(type)) {
-        types.push(type);
-      }
-    });
-
-    return types;
+    return entries;
   }
 
   function nameToTitle(name: string): string {
@@ -105,14 +170,6 @@ export const helpers = (config: Config, output: string) => {
     return ATTRIBUTES.find(a => a.code === attr)!.name;
   }
 
-  function getSkillName(skill: SkillCode): string {
-    return SKILLS.find(s => s.code === skill)!.name;
-  }
-
-  function getSourceName(source: SourceCode): string {
-    return SOURCES.find(s => s.code === source)!.name;
-  }
-
   function numberToRoman(num: number, upper?: boolean): string {
     let string = '';
     const roman = {
@@ -161,7 +218,6 @@ export const helpers = (config: Config, output: string) => {
   }
 
   return {
-    findAllEntryTypes,
     getFilePath,
     getVaultLink,
     getDirPath,
@@ -169,11 +225,11 @@ export const helpers = (config: Config, output: string) => {
     sortEntries,
     nameToTitle,
     getAttrName,
-    getSourceName,
-    getSkillName,
+    copyEntries,
 
     handlebars: {
-      link: getVaultLink
+      link: getVaultLink,
+      log: console.log
     }
   };
 };

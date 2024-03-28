@@ -7,10 +7,7 @@ export async function demoConverter(context: Context) {
     ...context
   });
 
-  for (const demo of context.data.renderdemo) {
-    const entity = await buildEntity(demo);
-    // const allTypes = _.findAllEntryTypes(demo.entries);
-    // console.log('allTypes', allTypes);
-    await entity.import();
-  }
+  const { renderdemo } = context.data;
+  const entity = await buildEntity(renderdemo);
+  await entity.import();
 }

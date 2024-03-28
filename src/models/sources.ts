@@ -225,3 +225,7 @@ export const SOURCES = [
   { code: 'XGE', name: "Xanathar's Guide to Everything" },
   { code: 'XMtS', name: 'X Marks the Spot' }
 ] as const;
+
+export type Source = (typeof SOURCES)[number];
+export type SourceCode = Source['code'];
+export type SourceName = Source['name'];

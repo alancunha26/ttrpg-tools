@@ -2,9 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import moment from 'moment';
 import Handlebars from 'handlebars';
-import { Context, Entity } from '../types';
+import { Context } from '../types';
 import { MarkdownBuilder } from './markdown-builder';
 import { SOURCES } from '../models/sources';
+import { Entity } from '../models/entity';
 
 export const EntityBuilder = (context: Context) => {
   const { type, config, helpers: _ } = context;
@@ -19,7 +20,7 @@ export const EntityBuilder = (context: Context) => {
   }
 
   return async (entity: Entity) => {
-    const entityName = entity.name.replace('Variant ', '');
+    const entityName = entity.name?.replace('Variant ', '') || '';
     const filepath = _.getFilePath(entityName, type);
     const dirpath = _.getDirPath(type);
 
