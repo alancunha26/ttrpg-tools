@@ -8,16 +8,8 @@ import {
   ToolProficiency,
   WeaponProficiency
 } from '../types';
-import { Entry, ArrEntry, ImageEntry } from './entry';
+import { Entry } from './entry';
 import { Source, SourceCode } from './sources';
-
-export interface BackgroundFluff {
-  name: string;
-  source: SourceCode;
-  entries?: Entry[];
-  images?: { item: ImageEntry } | ImageEntry[];
-  _copy?: Copy;
-}
 
 export interface Background {
   name: string;
@@ -39,13 +31,9 @@ export interface Background {
   additionalSources?: Source[];
   prerequisite?: Prerequisite[];
   otherSources?: Source[];
+  _copy?: Copy;
   fromFeature?: {
     feats: boolean;
     additionalSpells?: boolean;
-  };
-  _copy?: {
-    name: string;
-    source: string;
-    _mod?: { entries?: ArrEntry | ArrEntry[] };
   };
 }

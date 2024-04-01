@@ -10,7 +10,13 @@ interface ClassEntityProficiencies {
   tools?: ToolProficiency[];
 }
 
-export interface ClassEntity {
+export interface IClass {
+  name: string;
+  source: SourceCode;
+  page?: number;
+  srd?: boolean;
+  basicRules?: boolean;
+
   // General
   proficiency: SourceCode[];
   startingProficiencies: ClassEntityProficiencies;
@@ -44,13 +50,25 @@ export interface ClassEntity {
   preparedSpells?: string;
 }
 
-export interface ClassFeatureEntity {
+export interface ClassFeature {
+  name: string;
+  source: SourceCode;
+  page?: number;
+  srd?: boolean;
+  basicRules?: boolean;
+
   className: string;
   classSource: SourceCode;
   level: number;
 }
 
-export interface SubclassEntity {
+export interface Subclass {
+  name: string;
+  source: SourceCode;
+  page?: number;
+  srd?: boolean;
+  basicRules?: boolean;
+
   // General
   shortName: string;
   className: string;
@@ -67,10 +85,23 @@ export interface SubclassEntity {
   subSubclassSpells?: { [key: string]: Array<string | { className: string; classSource: string }> };
 }
 
-export interface SubclassFeatureEntity {
+export interface SubclassFeature {
+  name: string;
+  source: SourceCode;
+  page?: number;
+  srd?: boolean;
+  basicRules?: boolean;
+
   className: string;
   classSource: SourceCode;
   subclassShortName: string;
   subclassSource: SourceCode;
   level: number;
+}
+
+export interface ClassFile {
+  class: IClass[];
+  subclass: Subclass[];
+  classFeature: ClassFeature[];
+  subclassFeature: SubclassFeature[];
 }

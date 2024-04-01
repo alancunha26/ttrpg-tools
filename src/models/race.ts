@@ -1,7 +1,15 @@
-import { Ability, LanguageProficiency, Size, SkillProficiency, Speed, WeaponProficiency } from '../types';
-import { ExternalLink, InternalLink } from './entry';
+import { Ability, Copy, LanguageProficiency, Size, SkillProficiency, Speed, WeaponProficiency } from '../types';
+import { Entry, ExternalLink, InternalLink } from './entry';
+import { SourceCode } from './sources';
 
-export interface RaceEntity {
+export interface Race {
+  name: string;
+  source: SourceCode;
+  page?: number;
+  srd?: boolean;
+  basicRules?: boolean;
+  entries?: Entry[];
+
   speed: Speed;
   ability: Ability[];
   traitTags: string[];
@@ -16,14 +24,21 @@ export interface RaceEntity {
   alias?: string[];
 }
 
-export interface SubraceEntity {
+export interface Subrace {
+  name: string;
+  source: SourceCode;
+  page?: number;
+  srd?: boolean;
+  basicRules?: boolean;
+  entries?: Entry[];
+
   // General
   raceName: string;
   raceSource: string;
 
   // Overwrites
   speed?: Speed;
-  ability?: RaceAbility[];
+  ability?: Ability[];
   traitTags?: string[];
   size?: Size | Size[];
   skillProficiencies?: SkillProficiency[];
@@ -36,4 +51,10 @@ export interface SubraceEntity {
   alias?: string[];
   hasFluff?: boolean;
   hasFluffImages?: boolean;
+  _copy?: Copy;
+}
+
+export interface RacesFile {
+  race: Race[];
+  subrace: Subrace[];
 }
