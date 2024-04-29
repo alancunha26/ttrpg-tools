@@ -15,60 +15,41 @@
     "SCAG",
     "MPMM"
   ],
-
-  "exclude": [
-    "psionics",
-    "rewards"
-  ],
   
   "templates": {
     "renderdemo": "example/templates/renderdemo.hbs",
     "sources": "example/templates/source.hbs",
     
+    "rules": "example/templates/rules.hbs",
+    "variant-rules": "example/templates/variant-rules.hbs",
+    
     "monsters": "example/templates/monster.hbs",
     "classes": "example/templates/class.hbs",
-    "subclasses": "example/templates/subclass.hbs",
     "races": "example/templates/race.hbs",
-    "subraces": "example/templates/subrace.hbs",
     "items": "example/templates/item.hbs",
     "spells": "example/templates/spell.hbs",
     "backgrounds": "example/templates/background.hbs",
     "rewards": "example/templates/reward.hbs",
     "feats": "example/templates/feat.hbs",
-    "psionics": "example/templates/psionic.hbs",
-    "optional-features": "example/templates/optional-feature.hbs",
-
-    "actions": "example/templates/actions.hbs",
-    "diseases": "example/templates/diseases.hbs",
-    "conditions": "example/templates/conditions.hbs",
-    "senses": "example/templates/senses.hbs",
-    "skills": "example/templates/skills.hbs",
-    "variant-rules": "example/templates/variant-rules.hbs"
+    "optional-features": "example/templates/optional-feature.hbs"
   },
   
   "paths": {
     "renderdemo": "03 Library",
     "sources": "03 Library",
+  
+    "rules": "03 Library/Dungeons & Dragons 5e",
+    "variant-rules": "03 Library/Dungeons & Dragons 5e",
     
     "monsters": "03 Library/Dungeons & Dragons 5e",
     "classes": "03 Library/Dungeons & Dragons 5e",
-    "subclasses": "03 Library/Dungeons & Dragons 5e",
     "races": "03 Library/Dungeons & Dragons 5e",
-    "subraces": "03 Library/Dungeons & Dragons 5e",
     "items": "03 Library/Dungeons & Dragons 5e",
     "spells": "03 Library/Dungeons & Dragons 5e",
     "backgrounds": "03 Library/Dungeons & Dragons 5e",
     "rewards": "03 Library/Dungeons & Dragons 5e",
     "feats": "03 Library/Dungeons & Dragons 5e",
-    "psionics": "03 Library/Dungeons & Dragons 5e",
-    "optional-features": "03 Library/Dungeons & Dragons 5e",
-
-    "actions": "03 Library/Dungeons & Dragons 5e",
-    "diseases": "03 Library/Dungeons & Dragons 5e",
-    "conditions": "03 Library/Dungeons & Dragons 5e",
-    "senses": "03 Library/Dungeons & Dragons 5e",
-    "skills": "03 Library/Dungeons & Dragons 5e",
-    "variant-rules": "03 Library/Dungeons & Dragons 5e"
+    "optional-features": "03 Library/Dungeons & Dragons 5e"
   }
 }
 
