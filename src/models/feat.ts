@@ -7,7 +7,7 @@ import {
   WeaponProficiency
 } from '../types';
 
-export interface FeatEntity {
+export interface Feat {
   ability?: Ability[];
   skillProficiencies?: SkillProficiency[];
   languageProficiencies?: LanguageProficiency[];

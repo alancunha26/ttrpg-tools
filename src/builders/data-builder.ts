@@ -70,7 +70,7 @@ export const DataBuilder = (dataPath: string, config: Config) => {
       subclassFeatures: classes.subclassFeature
     },
     backgrounds: {
-      items: backgrounds,
+      backgrounds: backgrounds,
       fluffs: fluffBackgrounds
     },
     items: {

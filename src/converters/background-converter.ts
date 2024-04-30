@@ -1,7 +1,6 @@
 import { Context } from '../types';
 import { EntityBuilder } from '../builders/entity-builder';
 import { Entity } from '../models/entity';
-import { Entry } from '../models/entry';
 
 export async function backgroundConverter(context: Context) {
   const { data, config, helpers: _ } = context;
@@ -13,7 +12,7 @@ export async function backgroundConverter(context: Context) {
     ...context
   });
 
-  for (const background of backgrounds.items.filter(b => sources.includes(b.source))) {
+  for (const background of backgrounds.backgrounds.filter(b => sources.includes(b.source))) {
     // Import entity data with extra data
     const { name, source, page, srd } = background;
     const fluff = backgrounds.fluffs.find(f => f.name === name && f.source === source);
@@ -28,7 +27,7 @@ export async function backgroundConverter(context: Context) {
     }
 
     if (background._copy) {
-      const original = backgrounds.items.find(e => e.name === background._copy?.name);
+      const original = backgrounds.backgrounds.find(e => e.name === background._copy?.name);
       if (original?.entries) defaultEntries.push(..._.copyEntries(background._copy, original.entries));
     }
 
