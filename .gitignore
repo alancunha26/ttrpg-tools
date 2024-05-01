@@ -2,6 +2,6 @@ node_modules
 compendium
 zcompendium
 
-# Data
+# Data Folders
 src/resources/dnd-5e/data/*
 src/resources/pf-5e/data/*
