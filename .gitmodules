@@ -1,0 +1,9 @@
+[submodule "vendors/5etools"]
+	path = vendors/5etools
+	url = git@github.com:alancunha26/5etools.git
+[submodule "vendors/5etools-utils"]
+	path = vendors/5etools-utils
+	url = git@github.com:alancunha26/5etools-utils.git
+[submodule "vendors/pf2etools"]
+	path = vendors/pf2etools
+	url = git@github.com:alancunha26/pf2etools.git
