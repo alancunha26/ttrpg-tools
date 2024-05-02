@@ -4,7 +4,7 @@ import animation from 'chalk-animation';
 import gradient from 'gradient-string';
 import * as p from '@clack/prompts';
 import * as u from './utils';
-import { Program, programs } from './programs';
+import { programs } from './programs';
 import { System, systems } from './systems';
 
 function intro(title: string) {
@@ -45,7 +45,9 @@ async function main() {
 
   const code = await p.select({
     message: 'Select the program you want to execute',
-    options: programs[system].map(o => ({ value: o.code, label: o.label }))
+    options: programs[system]
+      .filter(o => (o.dev ? process.env.NODE_ENV === 'development' : true))
+      .map(o => ({ value: o.code, label: o.label }))
   });
 
   if (p.isCancel(system)) {

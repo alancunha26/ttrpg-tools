@@ -5,6 +5,7 @@ export interface Program {
   code: string;
   label: string;
   resolver: () => void;
+  dev?: boolean;
 }
 
 export const programs: { [key: string]: Program[] } = {
