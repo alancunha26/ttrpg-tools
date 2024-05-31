@@ -1,7 +1,11 @@
+import { CopyBlockGeneric } from './util';
+
 export interface BackgroundFile {
   background: Background[];
 }
 
 export interface BackgroundData {}
 
-export interface Background {}
+export type BackgroundCopy = BackgroundData & CopyBlockGeneric;
+
+export type Background = BackgroundData | BackgroundCopy;

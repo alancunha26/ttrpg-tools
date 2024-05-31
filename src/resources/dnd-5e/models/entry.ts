@@ -769,8 +769,7 @@ export interface EntryTableGroup extends BaseEntry {
 
 export type TableRow = Entry[] | EntryTableRow;
 
-export interface EntryTable extends BaseEntry {
-  type: 'table';
+export interface EntryTableBase extends BaseEntry {
   caption?: string;
   isStriped?: boolean;
   isNameGenerator?: boolean;
@@ -782,6 +781,14 @@ export interface EntryTable extends BaseEntry {
   rowStyles?: string[];
   rows: TableRow[];
   footnotes?: Entry[];
+
+  // homebrew specific
+  intro?: Entry[];
+  outro?: Entry[];
+}
+
+export interface EntryTable extends EntryTableBase {
+  type: 'table';
 }
 
 export interface EntryOptions extends BaseEntry {
