@@ -23,7 +23,7 @@ import { Skill } from './skill';
 import { Spell } from './spell';
 import { Table } from './table';
 import { Hazard, Trap } from './trap-hazard';
-import { MediaHref, MediaHrefExternal } from './util';
+import { MediaHref, MediaHrefExternal, SpellsBlock } from './util';
 import { VariantRule } from './variant-rule';
 import { Vehicle, VehicleUpgrade } from './vehicle';
 
@@ -107,28 +107,9 @@ export interface EntryFlowChart extends BaseEntry {
  * START SPELLCASTING SECTION
  */
 
-type _Spell = string | { entry: string; hidden: boolean };
+export type _Spell = string | { entry: string; hidden: boolean };
 
-interface _SpellcastingFrequency {
-  '1'?: _Spell[];
-  '2'?: _Spell[];
-  '3'?: _Spell[];
-  '4'?: _Spell[];
-  '5'?: _Spell[];
-  '6'?: _Spell[];
-  '7'?: _Spell[];
-  '8'?: _Spell[];
-  '9'?: _Spell[];
-  '9e'?: _Spell[];
-  '8e'?: _Spell[];
-  '7e'?: _Spell[];
-  '6e'?: _Spell[];
-  '5e'?: _Spell[];
-  '4e'?: _Spell[];
-  '3e'?: _Spell[];
-  '2e'?: _Spell[];
-  '1e'?: _Spell[];
-}
+export type _SpellcastingFrequency = SpellsBlock<_Spell[]>;
 
 interface _SpellcastingRecharge {
   '1'?: _Spell[];
