@@ -23,7 +23,14 @@ import { Skill } from './skill';
 import { Spell } from './spell';
 import { Table } from './table';
 import { Hazard, Trap } from './trap-hazard';
-import { MediaHref, MediaHrefExternal, SpellsBlock } from './util';
+import {
+  AbilityScoreUnion,
+  MediaHref,
+  MediaHrefExternal,
+  SpellcastingSpells,
+  SpellsFrequencyBlock,
+  SpellsRechargeBlock
+} from './util';
 import { VariantRule } from './variant-rule';
 import { Vehicle, VehicleUpgrade } from './vehicle';
 
@@ -107,37 +114,11 @@ export interface EntryFlowChart extends BaseEntry {
  * START SPELLCASTING SECTION
  */
 
-export type _Spell = string | { entry: string; hidden: boolean };
+type _Spell = string | { entry: string; hidden: boolean };
 
-export type _SpellcastingFrequency = SpellsBlock<_Spell[]>;
+type _SpellcastingFrequency = SpellsFrequencyBlock<_Spell[]>;
 
-interface _SpellcastingRecharge {
-  '1'?: _Spell[];
-  '2'?: _Spell[];
-  '3'?: _Spell[];
-  '4'?: _Spell[];
-  '5'?: _Spell[];
-  '6'?: _Spell[];
-}
-
-interface _SpellcastingLevel1To9 {
-  spells: string[];
-  lower?: number;
-  slots?: number;
-}
-
-interface _SpellcastingSpells {
-  '0'?: { spells: string[] };
-  '1'?: _SpellcastingLevel1To9;
-  '2'?: _SpellcastingLevel1To9;
-  '3'?: _SpellcastingLevel1To9;
-  '4'?: _SpellcastingLevel1To9;
-  '5'?: _SpellcastingLevel1To9;
-  '6'?: _SpellcastingLevel1To9;
-  '7'?: _SpellcastingLevel1To9;
-  '8'?: _SpellcastingLevel1To9;
-  '9'?: _SpellcastingLevel1To9;
-}
+type _SpellcastingRecharge = SpellsRechargeBlock<_Spell[]>;
 
 export interface EntrySpellcasting extends BaseEntry {
   type: 'spellcasting';
@@ -154,7 +135,7 @@ export interface EntrySpellcasting extends BaseEntry {
   yearly?: _SpellcastingFrequency;
   charges?: _SpellcastingFrequency;
   recharge?: _SpellcastingRecharge;
-  spells?: _SpellcastingSpells;
+  spells?: SpellcastingSpells;
   hidden?: Array<
     | 'constant'
     | 'will'
@@ -168,7 +149,7 @@ export interface EntrySpellcasting extends BaseEntry {
     | 'charges'
     | 'recharge'
   >;
-  ability?: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
+  ability?: AbilityScoreUnion;
   displayAs?: 'trait' | 'action' | 'bonus' | 'reaction';
   chargeItems?: string;
 }
@@ -667,19 +648,19 @@ export interface EntryLink extends BaseEntry {
 export interface EntryAbilityGeneric extends BaseEntry {
   type: 'abilityGeneric';
   text: string;
-  attributes?: Array<'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'>;
+  attributes?: Array<AbilityScoreUnion>;
 }
 
 export interface EntryAbilityAttackMod extends BaseEntry {
   type: 'abilityAttackMod';
   name: string;
-  attributes: Array<'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha' | 'spellcasting'>;
+  attributes: Array<AbilityScoreUnion | 'spellcasting'>;
 }
 
 export interface EntryAbilityDc extends BaseEntry {
   type: 'abilityDc';
   name: string;
-  attributes: Array<'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha' | 'spellcasting'>;
+  attributes: Array<AbilityScoreUnion | 'spellcasting'>;
 }
 
 export interface EntryDice extends BaseEntry {
