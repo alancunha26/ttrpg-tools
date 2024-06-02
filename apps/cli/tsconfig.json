@@ -1,0 +1,4 @@
+{
+  "extends": "@ttrpg-tools/typescript-config/base.json",
+  "include": ["src"]
+}

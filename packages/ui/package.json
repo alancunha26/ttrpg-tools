@@ -1,0 +1,20 @@
+{
+  "name": "@ttrpg-tools/ui",
+  "version": "0.0.0",
+  "exports": {
+    ".": { "default": "./index.ts" },
+    "./counter": "./components/counter.ts",
+    "./header": "./components/header.ts",
+    "./setup-counter": "./utils/counter.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint \"**/*.ts\""
+  },
+  "devDependencies": {
+    "@ttrpg-tools/eslint-config": "*",
+    "@ttrpg-tools/typescript-config": "*",
+    "eslint": "^8.57.0",
+    "typescript": "^5.3.3"
+  }
+}

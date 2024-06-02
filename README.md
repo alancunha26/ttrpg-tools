@@ -1,14 +1,33 @@
-# 5eTools Converter
+# `Turborepo` Vite starter
 
-A command line tool to convert 5etools data to markdown or html.
+This is an official starter Turborepo.
 
-## Dependencies
+## Using this example
 
-- https://github.com/TheGiddyLimit/5etools-utils
-- https://github.com/5etools-mirror-2/5etools-mirror-2.github.io
-- https://github.com/natemoo-re/clack
+Run the following command:
 
-- https://github.com/StefanTerdell/json-schema-to-zod
-- https://github.com/StefanTerdell/zod-to-json-schema
-- https://github.com/johngeorgewright/runtyping/tree/master/packages/zod
-- https://github.com/colinhacks/zod
+```sh
+npx create-turbo@latest -e with-vite
+```
+
+## What's inside?
+
+This Turborepo includes the following packages and apps:
+
+### Apps and Packages
+
+- `docs`: a vanilla [vite](https://vitejs.dev) ts app
+- `web`: another vanilla [vite](https://vitejs.dev) ts app
+- `@repo/ui`: a stub component & utility library shared by both `web` and `docs` applications
+- `@repo/eslint-config`: shared `eslint` configurations
+- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+
+Each package and app is 100% [TypeScript](https://www.typescriptlang.org/).
+
+### Utilities
+
+This Turborepo has some additional tools already setup for you:
+
+- [TypeScript](https://www.typescriptlang.org/) for static type checking
+- [ESLint](https://eslint.org/) for code linting
+- [Prettier](https://prettier.io) for code formatting
