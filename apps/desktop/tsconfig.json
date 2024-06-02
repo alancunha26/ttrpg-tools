@@ -1,4 +1,10 @@
 {
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@ui/*": ["../../packages/ui/src/*"]
+    }
+  },
   "extends": "@ttrpg-tools/typescript-config/vite.json",
   "references": [{ "path": "./tsconfig.node.json" }],
   "include": ["src"]

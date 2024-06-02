@@ -1,5 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
@@ -17,5 +22,15 @@ export default defineConfig(async () => ({
       // 3. tell vite to ignore watching `src-tauri`
       ignored: ['**/src-tauri/**']
     }
+  },
+
+  resolve: {
+    alias: [
+      // Reference: https://github.com/vercel/turbo/discussions/620#discussioncomment-2136195
+      {
+        find: '@ui',
+        replacement: path.resolve(__dirname, '../../packages/ui/src')
+      }
+    ]
   }
 }));

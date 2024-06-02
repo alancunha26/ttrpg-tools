@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import reactLogo from './assets/react.svg';
 import { invoke } from '@tauri-apps/api/tauri';
+import { Button } from '@ttrpg-tools/ui';
 import './App.css';
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
         <a href="https://reactjs.org" target="_blank">
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
+        <Button>Click Me!</Button>
       </div>
 
       <p>Click on the Tauri, Vite, and React logos to learn more.</p>
